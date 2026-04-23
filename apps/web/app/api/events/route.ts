@@ -65,6 +65,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const data = CreateEventSchema.parse(body)
 
+    // Force date strings to YYYY-MM-DD format — some clients send ISO timestamps
+    // that would otherwise get timezone-shifted by Postgres DATE casting.
+    const eventDate    = data.event_date    ? String(data.event_date).slice(0, 10) : null
+    const endDate      = data.end_date      ? String(data.end_date).slice(0, 10) : null
+    const rsvpDeadline = data.rsvp_deadline ? String(data.rsvp_deadline).slice(0, 10) : null
+
     const rows = await sql`
       INSERT INTO events (
         org_id, created_by, name, event_date, end_date, start_time, end_time, timezone,
@@ -73,7 +79,9 @@ export async function POST(req: NextRequest) {
         tone, target_audience, channels, rsvp_link, rsvp_deadline, max_capacity,
         tags, notes, custom_fields, checkin_config
       ) VALUES (
-        ${ctx.orgId}, ${ctx.userId}, ${data.name}, ${data.event_date}, ${data.end_date ?? null},
+        ${ctx.orgId}, ${ctx.userId}, ${data.name},
+        ${eventDate}::date,
+        ${endDate}::date,
         ${data.start_time}, ${data.end_time ?? null}, ${data.timezone},
         ${data.location_name ?? null}, ${data.location_address ?? null}, ${data.location_url ?? null},
         ${data.is_virtual}, ${data.event_mode},
@@ -83,7 +91,8 @@ export async function POST(req: NextRequest) {
         ${data.sponsors ? JSON.stringify(data.sponsors) : null},
         ${data.tone}, ${data.target_audience ?? null},
         ${data.channels}, ${data.rsvp_link ?? null},
-        ${data.rsvp_deadline ?? null}, ${data.max_capacity ?? null},
+        ${rsvpDeadline}::date,
+        ${data.max_capacity ?? null},
         ${data.tags}, ${data.notes ?? null},
         ${JSON.stringify(data.custom_fields ?? {})}::jsonb,
         ${JSON.stringify(data.checkin_config ?? {})}::jsonb

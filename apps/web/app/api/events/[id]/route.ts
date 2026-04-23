@@ -70,11 +70,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json()
     const data = UpdateEventSchema.parse(body)
 
+    // Normalize date strings to YYYY-MM-DD before casting to date
+    const eventDate    = data.event_date    ? String(data.event_date).slice(0, 10) : null
+    const endDate      = 'end_date' in data && data.end_date ? String(data.end_date).slice(0, 10) : null
+    const rsvpDeadline = 'rsvp_deadline' in data && data.rsvp_deadline ? String(data.rsvp_deadline).slice(0, 10) : null
+
     const rows = await sql`
       UPDATE events SET
         name             = COALESCE(${data.name ?? null}, name),
         status           = COALESCE(${data.status ?? null}, status),
-        event_date       = COALESCE(${data.event_date ?? null}, event_date),
+        event_date       = COALESCE(${eventDate}::date, event_date),
         start_time       = COALESCE(${data.start_time ?? null}, start_time),
         end_time         = CASE WHEN ${('end_time' in data)} THEN ${data.end_time ?? null} ELSE end_time END,
         timezone         = COALESCE(${data.timezone ?? null}, timezone),
@@ -90,12 +95,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         target_audience  = CASE WHEN ${'target_audience' in data} THEN ${data.target_audience ?? null} ELSE target_audience END,
         channels         = COALESCE(${data.channels ?? null}, channels),
         rsvp_link        = CASE WHEN ${'rsvp_link' in data} THEN ${data.rsvp_link ?? null} ELSE rsvp_link END,
-        rsvp_deadline    = CASE WHEN ${'rsvp_deadline' in data} THEN ${data.rsvp_deadline ?? null} ELSE rsvp_deadline END,
+        rsvp_deadline    = CASE WHEN ${'rsvp_deadline' in data} THEN ${rsvpDeadline}::date ELSE rsvp_deadline END,
         max_capacity     = CASE WHEN ${'max_capacity' in data} THEN ${data.max_capacity ?? null} ELSE max_capacity END,
         tags             = COALESCE(${data.tags ?? null}, tags),
         notes            = CASE WHEN ${'notes' in data} THEN ${data.notes ?? null} ELSE notes END,
         event_mode       = COALESCE(${data.event_mode ?? null}, event_mode),
-        end_date         = CASE WHEN ${'end_date' in data} THEN ${data.end_date ?? null} ELSE end_date END,
+        end_date         = CASE WHEN ${'end_date' in data} THEN ${endDate}::date ELSE end_date END,
         custom_fields    = CASE WHEN ${'custom_fields' in data} THEN ${JSON.stringify(data.custom_fields ?? {})}::jsonb ELSE custom_fields END,
         checkin_config   = CASE WHEN ${'checkin_config' in data} THEN ${JSON.stringify(data.checkin_config ?? {})}::jsonb ELSE checkin_config END,
         updated_at       = NOW()
