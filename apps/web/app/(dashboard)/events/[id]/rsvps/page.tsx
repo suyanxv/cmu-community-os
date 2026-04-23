@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/components/ui/Toast'
+import { TableRowSkeleton } from '@/components/ui/Skeleton'
 
 interface Rsvp {
   id: string
@@ -146,7 +147,7 @@ export default function RsvpPage() {
 
       {/* Table */}
       {loading ? (
-        <p className="text-center text-gray-400 py-8">Loading…</p>
+        <TableRowSkeleton count={4} />
       ) : rsvps.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500">No RSVPs yet. Add one above or import a CSV.</p>

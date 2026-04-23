@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import ContentCard from '@/components/events/ContentCard'
+import { CardListSkeleton } from '@/components/ui/Skeleton'
 
 interface ContentRow {
   id: string
@@ -124,7 +125,7 @@ export default function ContentPage() {
 
       {/* Content cards */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading…</div>
+        <CardListSkeleton count={3} />
       ) : content.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-4xl mb-4">✍️</p>

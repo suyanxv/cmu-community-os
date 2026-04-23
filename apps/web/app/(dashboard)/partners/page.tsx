@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/components/ui/Toast'
+import { CardListSkeleton } from '@/components/ui/Skeleton'
 
 interface Partner {
   id: string
@@ -98,7 +99,7 @@ export default function PartnersPage() {
       )}
 
       {loading ? (
-        <p className="text-center text-gray-400 py-8">Loading…</p>
+        <CardListSkeleton count={4} />
       ) : partners.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-4xl mb-4">🤝</p>
