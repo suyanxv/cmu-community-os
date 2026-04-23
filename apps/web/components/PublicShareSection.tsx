@@ -1,8 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Share2, Copy, Check, RefreshCw, Trash2, ExternalLink } from 'lucide-react'
+import { Share2, Copy, Check, RefreshCw, Trash2, ExternalLink, Mail } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
+
+interface PublicContact {
+  name: string | null
+  email: string | null
+}
 
 export default function PublicShareSection() {
   const toast = useToast()
@@ -12,11 +17,26 @@ export default function PublicShareSection() {
   const [disabling, setDisabling] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // Public contact info (rendered in public page footers so viewers can reach out).
+  const [contactName, setContactName] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [savedContact, setSavedContact] = useState<PublicContact | null>(null)
+  const [savingContact, setSavingContact] = useState(false)
+
   useEffect(() => {
-    // Org endpoint returns the full org record including public_share_token.
+    // Org endpoint returns the full org record including public_share_token
+    // and settings (where public_contact lives under settings.public_contact).
     fetch('/api/organizations')
       .then((r) => r.json())
-      .then((d) => setToken((d.data?.public_share_token as string) ?? null))
+      .then((d) => {
+        setToken((d.data?.public_share_token as string) ?? null)
+        const contact = (d.data?.settings?.public_contact ?? null) as PublicContact | null
+        if (contact) {
+          setContactName(contact.name ?? '')
+          setContactEmail(contact.email ?? '')
+          setSavedContact(contact)
+        }
+      })
       .catch(() => setToken(null))
   }, [])
 
@@ -65,6 +85,30 @@ export default function PublicShareSection() {
     setTimeout(() => setCopied(false), 2000)
     toast.success('Copied to clipboard')
   }
+
+  const saveContact = async () => {
+    const name = contactName.trim()
+    const email = contactEmail.trim()
+    setSavingContact(true)
+    const res = await fetch('/api/organizations/public-contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name || null, email: email || null }),
+    })
+    setSavingContact(false)
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: 'Failed to save contact' }))
+      toast.error(error ?? 'Failed to save contact')
+      return
+    }
+    const { data } = await res.json()
+    setSavedContact(data)
+    toast.success(data ? 'Contact saved' : 'Contact cleared')
+  }
+
+  const contactDirty =
+    (contactName.trim() !== (savedContact?.name ?? '')) ||
+    (contactEmail.trim() !== (savedContact?.email ?? ''))
 
   return (
     <div className="space-y-3">
@@ -133,6 +177,44 @@ export default function PublicShareSection() {
           <p className="text-xs text-gray-400">
             Anyone with this link can view published events and click through to the RSVP link. They cannot see RSVPs, partner details, or internal notes.
           </p>
+
+          {/* Contact shown on public pages */}
+          <div className="pt-3 mt-3 border-t border-gray-100">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Mail className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.75} />
+              <p className="text-sm font-medium text-gray-700">Contact shown on public pages</p>
+            </div>
+            <p className="text-xs text-gray-400 mb-2">
+              Rendered in the footer of the public calendar and event pages so viewers know who to reach out to. Both fields optional.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder="Name (e.g. Suyan Xu)"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+            {contactDirty && (
+              <div className="mt-2">
+                <button
+                  onClick={saveContact}
+                  disabled={savingContact}
+                  className="text-xs bg-sage-600 text-white px-3 py-1.5 rounded-md font-medium hover:bg-sage-700 disabled:opacity-50"
+                >
+                  {savingContact ? 'Saving…' : 'Save contact'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -14,10 +14,13 @@ export default async function PublicEventPage({ params }: Params) {
   if (!token || token.length < 8) notFound()
 
   const orgs = await sql`
-    SELECT id, name FROM organizations WHERE public_share_token = ${token}
+    SELECT id, name, settings->'public_contact' AS public_contact
+    FROM organizations
+    WHERE public_share_token = ${token}
   `
   if (!orgs[0]) notFound()
   const org = orgs[0]
+  const contact = (org.public_contact ?? null) as { name: string | null; email: string | null } | null
 
   const rows = await sql`
     SELECT
@@ -174,7 +177,16 @@ export default async function PublicEventPage({ params }: Params) {
       </main>
 
       <footer className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-xs text-gray-400 text-center">
-        Curated by {org.name as string}. For questions, reach out to the organizer directly.
+        Curated by {org.name as string}.
+        {contact?.email ? (
+          <> For questions, reach out to{' '}
+            {contact.name ? <span className="text-gray-500">{contact.name}</span> : null}
+            {contact.name ? ' at ' : ''}
+            <a href={`mailto:${contact.email}`} className="text-sage-700 hover:underline">{contact.email}</a>.
+          </>
+        ) : (
+          <> For questions, reach out to the organizer directly.</>
+        )}
       </footer>
     </div>
   )
