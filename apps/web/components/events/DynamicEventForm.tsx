@@ -64,6 +64,7 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
   })
   const [custom, setCustom] = useState<Record<string, unknown>>(initialCustom ?? {})
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -112,7 +113,24 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
     }
 
     const data = await res.json()
-    router.push(`/events/${eventId ?? data.data.id}`)
+    const savedId = eventId ?? data.data.id
+
+    if (!eventId && core.channels.length > 0) {
+      setGenerating(true)
+      try {
+        await fetch(`/api/events/${savedId}/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channels: core.channels }),
+        })
+      } catch {
+        // Non-fatal — user can regenerate from content page
+      }
+      router.push(`/events/${savedId}/content`)
+      return
+    }
+
+    router.push(`/events/${savedId}`)
   }
 
   const renderField = (field: TemplateField) => {
@@ -268,8 +286,14 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
         <button type="button" onClick={() => router.back()} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
           Cancel
         </button>
-        <button type="submit" disabled={saving} className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
-          {saving ? 'Saving…' : eventId ? 'Save Changes' : 'Create Event'}
+        <button type="submit" disabled={saving || generating} className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+          {generating
+            ? '✨ Generating content…'
+            : saving
+              ? 'Saving…'
+              : eventId
+                ? 'Save Changes'
+                : 'Create & Generate Content'}
         </button>
       </div>
     </form>

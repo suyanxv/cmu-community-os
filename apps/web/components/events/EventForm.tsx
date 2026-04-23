@@ -90,6 +90,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
   const router = useRouter()
   const [form, setForm] = useState<EventFormData>({ ...defaultValues, ...initialValues })
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const set = (key: keyof EventFormData, value: unknown) =>
@@ -147,7 +148,26 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
     }
 
     const data = await res.json()
-    router.push(`/events/${eventId ?? data.data.id}`)
+    const savedId = eventId ?? data.data.id
+
+    // Auto-generate content for the selected channels (fire and forget on edit,
+    // awaited on create so the user lands on the content page with it ready)
+    if (!eventId && form.channels.length > 0) {
+      setGenerating(true)
+      try {
+        await fetch(`/api/events/${savedId}/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channels: form.channels }),
+        })
+      } catch {
+        // Non-fatal — user can regenerate from content page
+      }
+      router.push(`/events/${savedId}/content`)
+      return
+    }
+
+    router.push(`/events/${savedId}`)
   }
 
   const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -381,10 +401,16 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         </button>
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || generating}
           className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
         >
-          {saving ? 'Saving…' : eventId ? 'Save Changes' : 'Create Event'}
+          {generating
+            ? '✨ Generating content…'
+            : saving
+              ? 'Saving…'
+              : eventId
+                ? 'Save Changes'
+                : 'Create & Generate Content'}
         </button>
       </div>
     </form>

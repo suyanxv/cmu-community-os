@@ -61,7 +61,7 @@ export default async function EventDetailPage({ params }: Params) {
             Edit
           </Link>
           <Link href={`/events/${id}/content`} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-            {hasContent ? 'View Content' : 'Generate Content'}
+            {hasContent ? 'View Content' : 'Add Content'}
           </Link>
         </div>
       </div>

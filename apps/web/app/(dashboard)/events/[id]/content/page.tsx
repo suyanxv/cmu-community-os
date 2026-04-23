@@ -21,7 +21,7 @@ export default function ContentPage() {
   const [content, setContent] = useState<ContentRow[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
-  const [selectedChannels, setSelectedChannels] = useState<string[]>(ALL_CHANNELS)
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const fetchContent = useCallback(async () => {
@@ -29,6 +29,9 @@ export default function ContentPage() {
     if (res.ok) {
       const { data } = await res.json()
       setContent(data)
+      // Pre-select only channels NOT already generated
+      const existing = new Set((data as ContentRow[]).map((c) => c.channel))
+      setSelectedChannels(ALL_CHANNELS.filter((c) => !existing.has(c)))
     }
     setLoading(false)
   }, [eventId])
@@ -80,14 +83,34 @@ export default function ContentPage() {
 
       {/* Generate controls */}
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-        <p className="text-sm font-medium text-gray-700 mb-3">Generate content for:</p>
+        <p className="text-sm font-medium text-gray-700 mb-1">
+          {content.length > 0 ? 'Generate additional channels:' : 'Generate content for:'}
+        </p>
+        {content.length > 0 && (
+          <p className="text-xs text-gray-400 mb-3">
+            Channels with content already use the ↻ button on each card to regenerate.
+          </p>
+        )}
         <div className="flex flex-wrap gap-2 mb-4">
-          {ALL_CHANNELS.map((ch) => (
-            <label key={ch} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${selectedChannels.includes(ch) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-              <input type="checkbox" checked={selectedChannels.includes(ch)} onChange={() => toggleChannel(ch)} className="sr-only" />
-              {CHANNEL_LABELS[ch]}
-            </label>
-          ))}
+          {ALL_CHANNELS.map((ch) => {
+            const existing = content.some((c) => c.channel === ch)
+            return (
+              <label
+                key={ch}
+                className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${
+                  existing
+                    ? 'border-green-200 bg-green-50 text-green-700'
+                    : selectedChannels.includes(ch)
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+                title={existing ? 'Already generated' : undefined}
+              >
+                <input type="checkbox" checked={selectedChannels.includes(ch)} onChange={() => toggleChannel(ch)} className="sr-only" />
+                {existing ? '✓ ' : ''}{CHANNEL_LABELS[ch]}
+              </label>
+            )
+          })}
         </div>
         {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
         <button
@@ -95,7 +118,7 @@ export default function ContentPage() {
           disabled={generating || selectedChannels.length === 0}
           className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
         >
-          {generating ? '⟳ Generating…' : content.length > 0 ? 'Regenerate Selected' : 'Generate Content'}
+          {generating ? '⟳ Generating…' : 'Generate Selected'}
         </button>
       </div>
 
