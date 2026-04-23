@@ -3,9 +3,10 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, MapPin, Video, Users as UsersIcon, Trash2, X, CheckSquare } from 'lucide-react'
+import { CalendarDays, MapPin, Video, Users as UsersIcon, Trash2, X, CheckSquare, LayoutGrid, List as ListIcon } from 'lucide-react'
 import { formatEventDate, localToday } from '@/lib/dates'
 import { useToast } from '@/components/ui/Toast'
+import EventsCalendar from '@/components/events/EventsCalendar'
 
 interface EventHost {
   user_id: string
@@ -48,6 +49,7 @@ export default function EventsList({ events }: { events: EventRow[] }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
+  const [view, setView] = useState<'list' | 'calendar'>('list')
   const today = localToday()
 
   // Distinct tags across the fetched events, sorted alphabetically
@@ -221,15 +223,37 @@ export default function EventsList({ events }: { events: EventRow[] }) {
             </button>
           ))}
         </div>
-        {!selectMode && (
-          <button
-            onClick={() => setSelectMode(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-stone-50"
-            title="Select multiple events"
-          >
-            <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> Select
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          <div className="flex bg-stone-100 p-0.5 rounded-lg">
+            <button
+              onClick={() => setView('list')}
+              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors ${
+                view === 'list' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title="List view"
+            >
+              <ListIcon className="w-3.5 h-3.5" strokeWidth={1.75} /> List
+            </button>
+            <button
+              onClick={() => setView('calendar')}
+              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors ${
+                view === 'calendar' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title="Calendar view"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.75} /> Calendar
+            </button>
+          </div>
+          {!selectMode && view === 'list' && (
+            <button
+              onClick={() => setSelectMode(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-stone-50"
+              title="Select multiple events"
+            >
+              <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> Select
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tag filter chips */}
@@ -264,7 +288,14 @@ export default function EventsList({ events }: { events: EventRow[] }) {
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {view === 'calendar' ? (
+        <EventsCalendar events={filtered.map((e) => ({
+          id: e.id, name: e.name,
+          event_date: e.event_date,
+          effective_end_date: e.effective_end_date,
+          status: e.status,
+        }))} />
+      ) : filtered.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-3xl mb-3">🔎</p>
           <p className="text-gray-500">
