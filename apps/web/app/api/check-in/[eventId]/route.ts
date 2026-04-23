@@ -6,7 +6,7 @@ import { errorResponse, ApiError } from '@/lib/errors'
 type Params = { params: Promise<{ eventId: string }> }
 
 // Public endpoint — no auth. Returns the minimum info needed to render the
-// public /check-in page (event name, organization name, whatsapp link).
+// public /check-in page (event name, organization name, whatsapp link, fields).
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const { eventId } = await params
@@ -28,10 +28,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 const CheckInSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  graduation_year: z.string().optional().nullable().transform((v) => v || null),
-  school: z.string().optional().nullable().transform((v) => v || null),
-  how_heard: z.string().optional().nullable().transform((v) => v || null),
-  whatsapp_joined: z.boolean().optional().default(false),
+  // Dynamic field responses keyed by field id. Strings only since the public
+  // form only renders string-capturing inputs.
+  responses: z.record(z.string(), z.union([z.string(), z.boolean()])).optional().default({}),
 })
 
 // Public endpoint — anyone with the QR/link can check themselves in.
@@ -48,8 +47,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (!eventRows[0]) throw new ApiError(404, 'Event not found')
     const orgId = eventRows[0].org_id
 
-    // Upsert by (event_id, email). If the attendee already RSVP'd, update their
-    // existing row with check-in fields. Otherwise create a new row.
+    const responses = data.responses ?? {}
+    const responsesJson = JSON.stringify(responses)
+
+    // Upsert by (event_id, email)
     const existing = await sql`
       SELECT id, check_in_at FROM rsvps
       WHERE event_id = ${eventId} AND LOWER(email) = LOWER(${data.email})
@@ -62,28 +63,25 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (existing[0]) {
       rsvpId = existing[0].id
       wasAlreadyCheckedIn = !!existing[0].check_in_at
+      // Merge new responses into any existing check_in_data
       await sql`
         UPDATE rsvps SET
-          name            = ${data.name},
-          graduation_year = ${data.graduation_year},
-          school          = ${data.school},
-          how_heard       = ${data.how_heard},
-          whatsapp_joined = ${data.whatsapp_joined},
-          check_in_at     = COALESCE(check_in_at, NOW()),
-          status          = 'confirmed',
-          source          = CASE WHEN source IN ('manual', 'csv_import') THEN source ELSE 'check_in' END,
-          updated_at      = NOW()
+          name          = ${data.name},
+          check_in_data = COALESCE(check_in_data, '{}'::jsonb) || ${responsesJson}::jsonb,
+          check_in_at   = COALESCE(check_in_at, NOW()),
+          status        = 'confirmed',
+          source        = CASE WHEN source IN ('manual', 'csv_import') THEN source ELSE 'check_in' END,
+          updated_at    = NOW()
         WHERE id = ${rsvpId}
       `
     } else {
       const inserted = await sql`
         INSERT INTO rsvps (
-          org_id, event_id, name, email, graduation_year, school, how_heard,
-          whatsapp_joined, status, guest_count, check_in_at, source
+          org_id, event_id, name, email, check_in_data,
+          status, guest_count, check_in_at, source
         ) VALUES (
           ${orgId}, ${eventId}, ${data.name}, ${data.email.toLowerCase()},
-          ${data.graduation_year}, ${data.school}, ${data.how_heard},
-          ${data.whatsapp_joined},
+          ${responsesJson}::jsonb,
           'confirmed', 1, NOW(), 'check_in'
         )
         RETURNING id

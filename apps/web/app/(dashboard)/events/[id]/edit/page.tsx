@@ -6,6 +6,12 @@ import EventForm from '@/components/events/EventForm'
 import DynamicEventForm from '@/components/events/DynamicEventForm'
 import type { TemplateField } from '@/lib/ai'
 
+const DEFAULT_CHECKIN_FIELDS: TemplateField[] = [
+  { id: 'graduation_year', label: 'Graduation Year',            type: 'text', required: false, placeholder: '2020' },
+  { id: 'school',          label: 'School / Program',           type: 'text', required: false, placeholder: 'Tepper, SCS, Heinz, …' },
+  { id: 'how_heard',       label: 'How did you hear about us?', type: 'text', required: false, placeholder: 'WhatsApp, friend, email…' },
+]
+
 type Params = { params: Promise<{ id: string }> }
 
 export default async function EditEventPage({ params }: Params) {
@@ -86,8 +92,9 @@ export default async function EditEventPage({ params }: Params) {
     max_capacity: event.max_capacity ? String(event.max_capacity) : '',
     tags: Array.isArray(event.tags) ? event.tags.join(', ') : '',
     notes: event.notes ?? '',
-    checkin_whatsapp_url: (event.checkin_config as Record<string, string> | null)?.whatsapp_url ?? '',
-    checkin_welcome_message: (event.checkin_config as Record<string, string> | null)?.welcome_message ?? '',
+    checkin_whatsapp_url: (event.checkin_config as Record<string, unknown> | null)?.whatsapp_url as string ?? '',
+    checkin_welcome_message: (event.checkin_config as Record<string, unknown> | null)?.welcome_message as string ?? '',
+    checkin_fields: ((event.checkin_config as { fields?: TemplateField[] } | null)?.fields as TemplateField[] | undefined) ?? DEFAULT_CHECKIN_FIELDS,
   }
 
   return (

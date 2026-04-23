@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { sql } from '@/lib/db'
 import CheckInForm from './CheckInForm'
+import type { TemplateField } from '@/lib/ai'
 
 type Params = { params: Promise<{ eventId: string }> }
 
@@ -13,9 +14,20 @@ interface EventRow {
   location_address: string | null
   is_virtual: boolean
   event_mode: string
-  checkin_config: { whatsapp_url?: string; welcome_message?: string } | null
+  checkin_config: {
+    whatsapp_url?: string
+    welcome_message?: string
+    fields?: TemplateField[]
+  } | null
   org_name: string
 }
+
+// Default fields used when the event hasn't customized the check-in form.
+const DEFAULT_CHECKIN_FIELDS: TemplateField[] = [
+  { id: 'graduation_year', label: 'Graduation Year',           type: 'text', required: false, placeholder: '2020' },
+  { id: 'school',          label: 'School / Program',          type: 'text', required: false, placeholder: 'Tepper, SCS, Heinz, …' },
+  { id: 'how_heard',       label: 'How did you hear about us?', type: 'text', required: false, placeholder: 'WhatsApp, friend, email…' },
+]
 
 export default async function CheckInPage({ params }: Params) {
   const { eventId } = await params
@@ -33,6 +45,10 @@ export default async function CheckInPage({ params }: Params) {
   if (!event) notFound()
 
   const config = event.checkin_config ?? {}
+  const fields = Array.isArray(config.fields) && config.fields.length > 0
+    ? config.fields
+    : DEFAULT_CHECKIN_FIELDS
+
   const locationLine = event.event_mode === 'virtual'
     ? 'Virtual event'
     : [event.location_name, event.location_address].filter(Boolean).join(', ') || ''
@@ -59,7 +75,7 @@ export default async function CheckInPage({ params }: Params) {
           </div>
         )}
 
-        <CheckInForm eventId={eventId} whatsappUrl={config.whatsapp_url} />
+        <CheckInForm eventId={eventId} whatsappUrl={config.whatsapp_url} fields={fields} />
 
         <p className="text-xs text-gray-400 text-center mt-8">
           Powered by Quorum

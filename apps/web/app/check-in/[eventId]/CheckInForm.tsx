@@ -1,36 +1,44 @@
 'use client'
 
 import { useState } from 'react'
+import type { TemplateField } from '@/lib/ai'
 
 interface CheckInFormProps {
   eventId: string
   whatsappUrl?: string
+  fields: TemplateField[]  // dynamic fields (beyond name/email, which are always shown)
 }
 
-export default function CheckInForm({ eventId, whatsappUrl }: CheckInFormProps) {
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    graduation_year: '',
-    school: '',
-    how_heard: '',
-  })
+export default function CheckInForm({ eventId, whatsappUrl, fields }: CheckInFormProps) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [responses, setResponses] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false)
 
-  const input = 'w-full px-4 py-3 text-base border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent'
-  const label = 'block text-sm font-medium text-gray-700 mb-1.5'
+  const inputClass = 'w-full px-4 py-3 text-base border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent'
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5'
+
+  const setResponse = (id: string, value: string) =>
+    setResponses((prev) => ({ ...prev, [id]: value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setError(null)
+
+    // Strip empty-string responses so we don't pollute the JSONB
+    const cleaned: Record<string, string> = {}
+    for (const [k, v] of Object.entries(responses)) {
+      if (v && v.trim()) cleaned[k] = v.trim()
+    }
+
     const res = await fetch(`/api/check-in/${eventId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, whatsapp_joined: !!whatsappUrl }),
+      body: JSON.stringify({ name, email, responses: cleaned }),
     })
     setSaving(false)
     if (!res.ok) {
@@ -57,7 +65,7 @@ export default function CheckInForm({ eventId, whatsappUrl }: CheckInFormProps) 
           </h2>
           <p className="text-gray-600 text-sm">
             {alreadyCheckedIn
-              ? 'Nice to see you again — enjoy the event.'
+              ? 'Nice to see you again, enjoy the event.'
               : 'Show this screen to an organizer to get your wristband.'}
           </p>
         </div>
@@ -74,7 +82,12 @@ export default function CheckInForm({ eventId, whatsappUrl }: CheckInFormProps) 
         )}
 
         <button
-          onClick={() => { setSubmitted(false); setForm({ name: '', email: '', graduation_year: '', school: '', how_heard: '' }) }}
+          onClick={() => {
+            setSubmitted(false)
+            setName('')
+            setEmail('')
+            setResponses({})
+          }}
           className="mt-3 text-sm text-gray-500 hover:text-gray-700"
         >
           Check in someone else
@@ -83,69 +96,91 @@ export default function CheckInForm({ eventId, whatsappUrl }: CheckInFormProps) 
     )
   }
 
+  const renderField = (field: TemplateField) => {
+    const value = responses[field.id] ?? ''
+
+    if (field.type === 'textarea') {
+      return (
+        <textarea
+          required={field.required}
+          value={value}
+          onChange={(e) => setResponse(field.id, e.target.value)}
+          placeholder={field.placeholder}
+          rows={3}
+          className={inputClass}
+        />
+      )
+    }
+
+    if (field.type === 'select') {
+      return (
+        <select
+          required={field.required}
+          value={value}
+          onChange={(e) => setResponse(field.id, e.target.value)}
+          className={inputClass}
+        >
+          <option value="">Select…</option>
+          {(field.options ?? []).map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      )
+    }
+
+    return (
+      <input
+        type={field.type === 'number' ? 'text' : field.type}
+        inputMode={field.type === 'number' ? 'numeric' : field.type === 'email' ? 'email' : undefined}
+        required={field.required}
+        value={value}
+        onChange={(e) => setResponse(field.id, e.target.value)}
+        placeholder={field.placeholder}
+        className={inputClass}
+      />
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Always-shown locked fields */}
       <div>
-        <label className={label}>Full Name *</label>
+        <label className={labelClass}>Full Name *</label>
         <input
           type="text"
           required
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Suyan Xu"
-          className={input}
+          className={inputClass}
           autoComplete="name"
         />
       </div>
 
       <div>
-        <label className={label}>Email *</label>
+        <label className={labelClass}>Email *</label>
         <input
           type="email"
           required
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className={input}
+          className={inputClass}
           autoComplete="email"
           inputMode="email"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={label}>Grad Year</label>
-          <input
-            type="text"
-            value={form.graduation_year}
-            onChange={(e) => setForm({ ...form, graduation_year: e.target.value })}
-            placeholder="2020"
-            className={input}
-            inputMode="numeric"
-          />
+      {/* Dynamic fields configured on the event */}
+      {fields.map((field) => (
+        <div key={field.id}>
+          <label className={labelClass}>
+            {field.label}{field.required ? ' *' : ''}
+          </label>
+          {renderField(field)}
+          {field.help && <p className="text-xs text-gray-400 mt-1">{field.help}</p>}
         </div>
-        <div>
-          <label className={label}>School</label>
-          <input
-            type="text"
-            value={form.school}
-            onChange={(e) => setForm({ ...form, school: e.target.value })}
-            placeholder="Tepper, SCS, …"
-            className={input}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className={label}>How did you hear about us?</label>
-        <input
-          type="text"
-          value={form.how_heard}
-          onChange={(e) => setForm({ ...form, how_heard: e.target.value })}
-          placeholder="WhatsApp, friend, email…"
-          className={input}
-        />
-      </div>
+      ))}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">

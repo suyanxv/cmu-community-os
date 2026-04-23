@@ -141,10 +141,11 @@ CREATE TABLE IF NOT EXISTS rsvps (
   check_in_at     TIMESTAMPTZ,
 
   -- Check-in extra fields (captured via the public /check-in form)
-  graduation_year TEXT,
-  school          TEXT,
-  how_heard       TEXT,
+  graduation_year TEXT,         -- legacy column, kept for back-compat
+  school          TEXT,         -- legacy column, kept for back-compat
+  how_heard       TEXT,         -- legacy column, kept for back-compat
   whatsapp_joined BOOLEAN DEFAULT FALSE,
+  check_in_data   JSONB NOT NULL DEFAULT '{}',  -- dynamic check-in field responses
 
   source          TEXT DEFAULT 'manual',
   notes           TEXT,

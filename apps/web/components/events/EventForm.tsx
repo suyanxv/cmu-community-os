@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
+import type { TemplateField } from '@/lib/ai'
+import CheckInFieldsEditor from '@/components/events/CheckInFieldsEditor'
 
 type Speaker = { name: string; title: string; bio: string }
 type Sponsor = { name: string; tier: string }
@@ -33,6 +35,7 @@ interface EventFormData {
   notes: string
   checkin_whatsapp_url: string
   checkin_welcome_message: string
+  checkin_fields: TemplateField[]
 }
 
 const CHANNEL_OPTIONS = [
@@ -84,6 +87,11 @@ const defaultValues: EventFormData = {
   notes: '',
   checkin_whatsapp_url: '',
   checkin_welcome_message: '',
+  checkin_fields: [
+    { id: 'graduation_year', label: 'Graduation Year',            type: 'text', required: false, placeholder: '2020' },
+    { id: 'school',          label: 'School / Program',           type: 'text', required: false, placeholder: 'Tepper, SCS, Heinz, …' },
+    { id: 'how_heard',       label: 'How did you hear about us?', type: 'text', required: false, placeholder: 'WhatsApp, friend, email…' },
+  ],
 }
 
 interface EventFormProps {
@@ -136,6 +144,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       checkin_config: {
         ...(form.checkin_whatsapp_url    ? { whatsapp_url:    form.checkin_whatsapp_url }    : {}),
         ...(form.checkin_welcome_message ? { welcome_message: form.checkin_welcome_message } : {}),
+        fields: form.checkin_fields,
       },
     }
 
@@ -415,6 +424,13 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
             rows={2}
             placeholder="Welcome! Fill this out to get your wristband."
             className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Check-in Form Fields</label>
+          <CheckInFieldsEditor
+            fields={form.checkin_fields}
+            onChange={(v) => set('checkin_fields', v)}
           />
         </div>
       </div>
