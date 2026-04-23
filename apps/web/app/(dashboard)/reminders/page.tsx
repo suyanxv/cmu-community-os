@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import { CardListSkeleton } from '@/components/ui/Skeleton'
-import { CalendarDays, User, Sparkles, Check } from 'lucide-react'
+import { CalendarDays, User, Sparkles, Check, Clock } from 'lucide-react'
 
 interface Reminder {
   id: string
@@ -45,7 +45,7 @@ function RemindersContent() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '', assigned_to: '' })
   const [saving, setSaving] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'done'>('pending')
+  const [filter, setFilter] = useState<'all' | 'pending' | 'snoozed' | 'done'>('pending')
   const [query, setQuery] = useState('')
 
   // Fetch events + members for dropdowns once
@@ -121,6 +121,38 @@ function RemindersContent() {
     await fetchReminders()
   }
 
+  const snooze = async (id: string, days: number) => {
+    const due = new Date()
+    due.setDate(due.getDate() + days)
+    const yyyyMmDd = due.toISOString().slice(0, 10)
+    const res = await fetch(`/api/reminders/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'snoozed', due_date: yyyyMmDd }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to snooze')
+      return
+    }
+    toast.success(`Snoozed ${days === 1 ? '1 day' : days === 7 ? '1 week' : `${days} days`}`)
+    await fetchReminders()
+  }
+
+  const unsnooze = async (id: string) => {
+    const res = await fetch(`/api/reminders/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending' }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to unsnooze')
+      return
+    }
+    await fetchReminders()
+  }
+
   const inputClass = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-sage-500'
 
   return (
@@ -147,12 +179,12 @@ function RemindersContent() {
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-500"
           />
         </div>
-        <div className="flex gap-1 bg-stone-100 p-1 rounded-lg w-fit">
-          {(['pending', 'all', 'done'] as const).map((f) => (
+        <div className="flex gap-1 bg-stone-100 p-1 rounded-lg w-fit overflow-x-auto">
+          {(['pending', 'all', 'snoozed', 'done'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1 text-xs font-medium rounded-md capitalize transition-colors ${filter === f ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+              className={`px-3 py-1 text-xs font-medium rounded-md capitalize transition-colors whitespace-nowrap ${filter === f ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
             >
               {f}
             </button>
@@ -227,21 +259,25 @@ function RemindersContent() {
         markDone={markDone}
         members={members}
         reassign={reassign}
+        snooze={snooze}
+        unsnooze={unsnooze}
       />
     </div>
   )
 }
 
 function ReminderList({
-  reminders, loading, query, filter, markDone, members, reassign,
+  reminders, loading, query, filter, markDone, members, reassign, snooze, unsnooze,
 }: {
   reminders: Reminder[]
   loading: boolean
   query: string
-  filter: 'all' | 'pending' | 'done'
+  filter: 'all' | 'pending' | 'snoozed' | 'done'
   markDone: (id: string, title: string) => void
   members: MemberOption[]
   reassign: (id: string, userId: string | null) => void
+  snooze: (id: string, days: number) => void
+  unsnooze: (id: string) => void
 }) {
   if (loading) return <CardListSkeleton count={4} />
   if (reminders.length === 0) return (
@@ -271,7 +307,11 @@ function ReminderList({
   return (
     <div className="space-y-2">
       {filtered.map((r) => (
-        <div key={r.id} className={`bg-white border rounded-xl p-4 flex items-start gap-4 ${r.status === 'done' ? 'opacity-60' : 'border-gray-200'}`}>
+        <div key={r.id} className={`bg-white border rounded-xl p-4 flex items-start gap-4 ${
+          r.status === 'done' ? 'opacity-60 border-gray-200'
+          : r.status === 'snoozed' ? 'border-lavender-200 bg-lavender-50/30'
+          : 'border-gray-200'
+        }`}>
           <button
             onClick={() => r.status !== 'done' && markDone(r.id, r.title)}
             className={`mt-0.5 h-5 w-5 rounded-full border-2 flex-shrink-0 transition-colors ${
@@ -315,10 +355,42 @@ function ReminderList({
               )}
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
-            <p className={`text-sm font-medium ${new Date(r.due_date) < new Date() && r.status !== 'done' ? 'text-red-500' : 'text-gray-500'}`}>
+          <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
+            <p className={`text-sm font-medium ${
+              r.status === 'snoozed' ? 'text-lavender-700'
+              : new Date(r.due_date) < new Date() && r.status !== 'done' ? 'text-red-500'
+              : 'text-gray-500'
+            }`}>
               {new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </p>
+            {r.status === 'pending' && (
+              <label className="inline-flex items-center gap-1 text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                <Clock className="w-3 h-3" strokeWidth={1.75} />
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value)
+                    if (!isNaN(v)) snooze(r.id, v)
+                  }}
+                  className="bg-transparent border-0 focus:outline-none text-xs cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <option value="">Snooze…</option>
+                  <option value="1">1 day</option>
+                  <option value="3">3 days</option>
+                  <option value="7">1 week</option>
+                  <option value="14">2 weeks</option>
+                </select>
+              </label>
+            )}
+            {r.status === 'snoozed' && (
+              <button
+                onClick={() => unsnooze(r.id)}
+                className="inline-flex items-center gap-1 text-xs text-lavender-700 hover:underline"
+              >
+                <Clock className="w-3 h-3" strokeWidth={1.75} /> Unsnooze
+              </button>
+            )}
           </div>
         </div>
       ))}
