@@ -256,15 +256,19 @@ export default function EventsList({ events }: { events: EventRow[] }) {
               <Columns3 className="w-3.5 h-3.5" strokeWidth={1.75} /> Year
             </button>
           </div>
-          {!selectMode && view === 'list' && (
-            <button
-              onClick={() => setSelectMode(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-stone-50"
-              title="Select multiple events"
-            >
-              <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> Select
-            </button>
-          )}
+          {/* Kept in the layout across all views so the view toggle doesn't shift
+              position when List is deselected. Hidden + non-interactive in other views. */}
+          <button
+            onClick={() => setSelectMode(true)}
+            aria-hidden={selectMode || view !== 'list'}
+            tabIndex={selectMode || view !== 'list' ? -1 : 0}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-stone-50 ${
+              !selectMode && view === 'list' ? '' : 'invisible pointer-events-none'
+            }`}
+            title="Select multiple events"
+          >
+            <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> Select
+          </button>
         </div>
       </div>
 
