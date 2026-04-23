@@ -1,7 +1,7 @@
 import { sql } from './db'
 
-type EntityType = 'event' | 'partner' | 'reminder' | 'rsvp' | 'member' | 'content'
-type Action = 'created' | 'updated' | 'deleted' | 'generated' | 'completed' | 'imported'
+type EntityType = 'event' | 'partner' | 'reminder' | 'rsvp' | 'member' | 'content' | 'broadcast'
+type Action = 'created' | 'updated' | 'deleted' | 'generated' | 'completed' | 'imported' | 'sent'
 
 export function logActivity(params: {
   orgId: string

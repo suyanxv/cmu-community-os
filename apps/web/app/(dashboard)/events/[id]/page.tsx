@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
+import BroadcastsSection from '@/components/events/BroadcastsSection'
 import CheckInCard from '@/components/events/CheckInCard'
 import DeleteEventButton from '@/components/events/DeleteEventButton'
 import DuplicateEventButton from '@/components/events/DuplicateEventButton'
@@ -134,6 +135,9 @@ export default async function EventDetailPage({ params }: Params) {
 
       {/* Check-in */}
       <CheckInCard eventId={id} checkedInCount={event.checked_in_count ?? 0} rsvpCount={event.rsvp_count ?? 0} />
+
+      {/* Broadcasts (email + WhatsApp) */}
+      <BroadcastsSection eventId={id} eventName={event.name as string} />
 
       {/* Partners linked to this event */}
       <EventPartnersSection eventId={id} />
