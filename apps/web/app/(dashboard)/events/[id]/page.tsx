@@ -9,6 +9,7 @@ import EventPartnersSection from '@/components/events/EventPartnersSection'
 import EventStatusControl from '@/components/events/EventStatusControl'
 import GenerateRemindersButton from '@/components/reminders/GenerateRemindersButton'
 import ShareEventButton from '@/components/events/ShareEventButton'
+import { FileText, Ticket, Bell } from 'lucide-react'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -85,19 +86,19 @@ export default async function EventDetailPage({ params }: Params) {
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <Link href={`/events/${id}/content`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <p className="text-lg mb-1">✍️</p>
+          <FileText className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
           <p className="font-medium text-gray-900">Generated Content</p>
           <p className="text-sm text-gray-500 mt-1">
             {hasContent ? `${content.length} channels ready` : 'Not generated yet'}
           </p>
         </Link>
         <Link href={`/events/${id}/rsvps`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <p className="text-lg mb-1">🎟️</p>
+          <Ticket className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
           <p className="font-medium text-gray-900">RSVP Management</p>
           <p className="text-sm text-gray-500 mt-1">{event.rsvp_count} confirmed</p>
         </Link>
         <Link href={`/reminders?event_id=${id}`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <p className="text-lg mb-1">🔔</p>
+          <Bell className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
           <p className="font-medium text-gray-900">Reminders</p>
           <p className="text-sm text-gray-500 mt-1">View & manage tasks</p>
         </Link>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { RotateCw, Check, Copy } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 interface ContentCardProps {
@@ -77,19 +78,25 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
           <button
             onClick={handleRegenerate}
             disabled={regenerating}
-            className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-50"
+            title="Regenerate"
           >
-            {regenerating ? '⟳ Regenerating…' : '↻ Regenerate'}
+            <RotateCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+            <span className="hidden sm:inline">{regenerating ? 'Regenerating…' : 'Regenerate'}</span>
           </button>
           <button
             onClick={handleCopy}
-            className={`text-xs px-3 py-1 rounded font-medium transition-colors ${
+            className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded font-medium transition-colors ${
               copied
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-sage-100 text-sage-700'
                 : 'bg-sage-600 text-white hover:bg-sage-700'
             }`}
           >
-            {copied ? '✓ Copied!' : 'Copy'}
+            {copied ? (
+              <><Check className="w-3.5 h-3.5" strokeWidth={2} /> Copied</>
+            ) : (
+              <><Copy className="w-3.5 h-3.5" strokeWidth={1.75} /> Copy</>
+            )}
           </button>
         </div>
       </div>

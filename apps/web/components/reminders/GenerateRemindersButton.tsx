@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Sparkles, X } from 'lucide-react'
 
 interface Suggestion {
   title: string
@@ -95,9 +96,9 @@ export default function GenerateRemindersButton({ eventId }: { eventId: string }
     <>
       <button
         onClick={generate}
-        className="px-4 py-2 text-sm border border-sage-300 text-sage-700 bg-sage-50 rounded-lg hover:bg-sage-100"
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-sage-300 text-sage-700 bg-sage-50 rounded-lg hover:bg-sage-100"
       >
-        ✨ Suggest Reminders
+        <Sparkles className="w-4 h-4" strokeWidth={1.75} /> Suggest Reminders
       </button>
 
       {open && (
@@ -111,10 +112,8 @@ export default function GenerateRemindersButton({ eventId }: { eventId: string }
                   Review, edit, and pick which reminders to save to your event.
                 </p>
               </div>
-              <button onClick={close} disabled={saving} className="p-1.5 rounded-lg hover:bg-stone-100 disabled:opacity-50">
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={close} disabled={saving} className="p-1.5 rounded-lg hover:bg-stone-100 disabled:opacity-50" aria-label="Close">
+                <X className="w-5 h-5 text-gray-500" strokeWidth={1.75} />
               </button>
             </div>
 
@@ -122,7 +121,7 @@ export default function GenerateRemindersButton({ eventId }: { eventId: string }
             <div className="flex-1 overflow-y-auto p-6 space-y-3">
               {loading && (
                 <div className="text-center py-12">
-                  <p className="text-4xl mb-3 animate-pulse">✨</p>
+                  <Sparkles className="w-8 h-8 text-sage-400 mx-auto mb-3 animate-pulse" strokeWidth={1.5} />
                   <p className="text-sm text-gray-500">Claude is drafting a reminder schedule…</p>
                 </div>
               )}

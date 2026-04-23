@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { QrCode, Download, Link as LinkIcon, ClipboardList, X } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 interface CheckInCardProps {
@@ -62,27 +63,27 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
       <div className="flex flex-wrap gap-2">
         <button
           onClick={showQr}
-          className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 font-medium"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 font-medium"
         >
-          📱 Show QR Code
+          <QrCode className="w-4 h-4" strokeWidth={1.75} /> Show QR
         </button>
         <a
           href={`/api/events/${eventId}/qr?size=1000&download=1`}
-          className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
         >
-          ⬇️ Download QR (PNG)
+          <Download className="w-4 h-4" strokeWidth={1.75} /> Download PNG
         </a>
         <button
           onClick={copyLink}
-          className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
         >
-          🔗 Copy Link
+          <LinkIcon className="w-4 h-4" strokeWidth={1.75} /> Copy Link
         </button>
         <Link
           href={`/events/${eventId}/check-in`}
-          className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
         >
-          📋 View Attendance
+          <ClipboardList className="w-4 h-4" strokeWidth={1.75} /> Attendance
         </Link>
       </div>
 
@@ -95,9 +96,7 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
                 <p className="text-xs text-gray-500 mt-0.5 break-all">{checkInUrl}</p>
               </div>
               <button onClick={() => setQrOpen(false)} className="p-1 text-gray-400 hover:text-gray-600" aria-label="Close">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-5 h-5" strokeWidth={1.75} />
               </button>
             </div>
 

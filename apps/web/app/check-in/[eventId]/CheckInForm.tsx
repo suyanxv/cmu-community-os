@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Check, MessageCircle } from 'lucide-react'
 import type { TemplateField } from '@/lib/ai'
 
 interface CheckInFormProps {
@@ -56,9 +57,7 @@ export default function CheckInForm({ eventId, whatsappUrl, fields }: CheckInFor
       <div className="text-center">
         <div className="bg-sage-50 border border-sage-200 rounded-2xl p-8 mb-5">
           <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-sage-500 flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="w-8 h-8 text-white" strokeWidth={3} />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             {alreadyCheckedIn ? 'Already checked in!' : 'You\'re checked in!'}
@@ -75,9 +74,10 @@ export default function CheckInForm({ eventId, whatsappUrl, fields }: CheckInFor
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full bg-green-600 text-white text-center px-5 py-3.5 rounded-xl font-medium hover:bg-green-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 w-full bg-green-600 text-white text-center px-5 py-3.5 rounded-xl font-medium hover:bg-green-700 transition-colors"
           >
-            💬 Join our WhatsApp Community
+            <MessageCircle className="w-5 h-5" strokeWidth={1.75} />
+            Join our WhatsApp Community
           </a>
         )}
 

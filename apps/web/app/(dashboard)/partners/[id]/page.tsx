@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/components/ui/Toast'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { Mail, Phone, Globe, Briefcase, Check, Sparkles } from 'lucide-react'
 
 interface Partner {
   id: string
@@ -133,10 +134,30 @@ export default function PartnerDetailPage() {
 
       {/* Contact info */}
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5 space-y-2">
-        {partner.email && <p className="text-sm text-gray-700">📧 <a href={`mailto:${partner.email}`} className="text-sage-600 hover:underline">{partner.email}</a></p>}
-        {partner.phone && <p className="text-sm text-gray-700">📞 {partner.phone}</p>}
-        {partner.website && <p className="text-sm text-gray-700">🌐 <a href={partner.website} target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline">{partner.website}</a></p>}
-        {partner.linkedin_url && <p className="text-sm text-gray-700">💼 <a href={partner.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline">LinkedIn</a></p>}
+        {partner.email && (
+          <p className="text-sm text-gray-700 flex items-center gap-2">
+            <Mail className="w-4 h-4 text-gray-400" strokeWidth={1.75} />
+            <a href={`mailto:${partner.email}`} className="text-sage-700 hover:underline">{partner.email}</a>
+          </p>
+        )}
+        {partner.phone && (
+          <p className="text-sm text-gray-700 flex items-center gap-2">
+            <Phone className="w-4 h-4 text-gray-400" strokeWidth={1.75} />
+            {partner.phone}
+          </p>
+        )}
+        {partner.website && (
+          <p className="text-sm text-gray-700 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-gray-400" strokeWidth={1.75} />
+            <a href={partner.website} target="_blank" rel="noopener noreferrer" className="text-sage-700 hover:underline break-all">{partner.website}</a>
+          </p>
+        )}
+        {partner.linkedin_url && (
+          <p className="text-sm text-gray-700 flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-gray-400" strokeWidth={1.75} />
+            <a href={partner.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sage-700 hover:underline">LinkedIn</a>
+          </p>
+        )}
         {partner.notes && <p className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-100">{partner.notes}</p>}
       </div>
 
@@ -151,7 +172,7 @@ export default function PartnerDetailPage() {
                 <div className="flex items-center gap-2 text-gray-400">
                   {ev.role && <span>{ev.role}</span>}
                   <span>{new Date(ev.event_date).toLocaleDateString()}</span>
-                  {ev.confirmed && <span className="text-green-500">✓</span>}
+                  {ev.confirmed && <Check className="w-3.5 h-3.5 text-sage-600" strokeWidth={2.5} />}
                 </div>
               </div>
             ))}
@@ -195,7 +216,11 @@ export default function PartnerDetailPage() {
               <div key={c.id} className="border-l-2 border-gray-200 pl-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-gray-600 capitalize">{c.type}</span>
-                  {c.ai_drafted && <span className="text-xs text-sage-400">✨ AI</span>}
+                  {c.ai_drafted && (
+                    <span className="inline-flex items-center gap-1 text-xs text-sage-600">
+                      <Sparkles className="w-3 h-3" strokeWidth={1.75} /> AI
+                    </span>
+                  )}
                   {c.event_name && <span className="text-xs text-gray-400">· {c.event_name}</span>}
                   <span className="text-xs text-gray-400 ml-auto">{new Date(c.created_at).toLocaleDateString()}</span>
                 </div>

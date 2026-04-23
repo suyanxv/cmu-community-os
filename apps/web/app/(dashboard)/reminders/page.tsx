@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import { CardListSkeleton } from '@/components/ui/Skeleton'
+import { CalendarDays, User, Sparkles, Check } from 'lucide-react'
 
 interface Reminder {
   id: string
@@ -199,16 +200,28 @@ function ReminderList({
                 : 'border-gray-300 hover:border-sage-500'
             }`}
           >
-            {r.status === 'done' && <span className="text-white text-xs flex items-center justify-center">✓</span>}
+            {r.status === 'done' && <Check className="w-3 h-3 text-white m-auto" strokeWidth={3} />}
           </button>
           <div className="flex-1 min-w-0">
             <p className={`font-medium text-gray-900 ${r.status === 'done' ? 'line-through' : ''}`}>{r.title}</p>
             {r.description && <p className="text-sm text-gray-500 mt-0.5">{r.description}</p>}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[r.priority]}`}>{r.priority}</span>
-              {r.event_name && <span className="text-xs text-gray-400">📅 {r.event_name}</span>}
-              {r.assigned_to_name && <span className="text-xs text-gray-400">👤 {r.assigned_to_name}</span>}
-              {r.ai_generated && <span className="text-xs text-sage-400">✨ AI</span>}
+              {r.event_name && (
+                <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                  <CalendarDays className="w-3 h-3" strokeWidth={1.75} /> {r.event_name}
+                </span>
+              )}
+              {r.assigned_to_name && (
+                <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                  <User className="w-3 h-3" strokeWidth={1.75} /> {r.assigned_to_name}
+                </span>
+              )}
+              {r.ai_generated && (
+                <span className="inline-flex items-center gap-1 text-xs text-sage-600">
+                  <Sparkles className="w-3 h-3" strokeWidth={1.75} /> AI
+                </span>
+              )}
             </div>
           </div>
           <div className="text-right flex-shrink-0">

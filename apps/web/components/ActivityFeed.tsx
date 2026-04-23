@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { CardListSkeleton } from '@/components/ui/Skeleton'
+import {
+  Plus, Pencil, Trash2, Sparkles, Check, Upload, Circle,
+  type LucideIcon,
+} from 'lucide-react'
 
 interface ActivityItem {
   id: string
@@ -16,13 +20,13 @@ interface ActivityItem {
   created_at: string
 }
 
-const ACTION_ICONS: Record<string, string> = {
-  created: '➕',
-  updated: '✏️',
-  deleted: '🗑️',
-  generated: '✨',
-  completed: '✅',
-  imported: '📥',
+const ACTION_ICONS: Record<string, LucideIcon> = {
+  created: Plus,
+  updated: Pencil,
+  deleted: Trash2,
+  generated: Sparkles,
+  completed: Check,
+  imported: Upload,
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -105,13 +109,13 @@ export default function ActivityFeed() {
     <div className="space-y-1">
       {items.map((item) => {
         const link = linkFor(item)
+        const Icon = ACTION_ICONS[item.action] ?? Circle
+        const actionColor = ACTION_COLORS[item.action] ?? 'text-gray-700'
         const content = (
           <div className="flex items-start gap-3 px-3 py-2.5 hover:bg-stone-50 rounded-lg transition-colors">
-            <span className="mt-0.5 text-sm shrink-0">{ACTION_ICONS[item.action] ?? '•'}</span>
+            <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${actionColor}`} strokeWidth={1.75} />
             <div className="flex-1 min-w-0">
-              <p className={`text-sm ${ACTION_COLORS[item.action] ?? 'text-gray-700'}`}>
-                {describe(item)}
-              </p>
+              <p className={`text-sm ${actionColor}`}>{describe(item)}</p>
               <p className="text-xs text-gray-400 mt-0.5">{relativeTime(item.created_at)}</p>
             </div>
           </div>
