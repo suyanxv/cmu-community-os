@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Pencil, Check, X, Trash2, UserCog } from 'lucide-react'
+import { Pencil, Check, X, Trash2, UserCog, RefreshCw } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 import { CardListSkeleton } from '@/components/ui/Skeleton'
 
@@ -35,6 +35,7 @@ export default function TeamSection() {
   const [loading, setLoading] = useState(true)
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [titleDraft, setTitleDraft] = useState('')
+  const [syncing, setSyncing] = useState(false)
 
   const fetchMembers = useCallback(async () => {
     const res = await fetch('/api/members')
@@ -101,17 +102,44 @@ export default function TeamSection() {
     toast.success(`${name} removed`)
   }
 
+  const syncFromClerk = async () => {
+    setSyncing(true)
+    const res = await fetch('/api/members/sync', { method: 'POST' })
+    setSyncing(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to sync from Clerk')
+      return
+    }
+    const { data } = await res.json()
+    toast.success(`Synced — ${data.imported} added, ${data.updated} updated`)
+    await fetchMembers()
+  }
+
   const currentMember = members.find((m) => m.user_id === currentUserId)
   const isAdmin = currentMember?.role === 'admin'
 
   return (
     <div>
-      <div className="mb-4">
-        <h2 className="text-base font-semibold text-gray-900">Team</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage board roles and titles. Invite new members using the{' '}
-          <span className="font-medium text-gray-700">Organization &amp; Members</span> panel below.
-        </p>
+      <div className="mb-4 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Team</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage board roles and titles. Invite new members using the{' '}
+            <span className="font-medium text-gray-700">Organization &amp; Members</span> panel below.
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={syncFromClerk}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 text-xs text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-stone-50 disabled:opacity-50 shrink-0"
+            title="Backfill any members Clerk knows about but Quorum missed (e.g. if a webhook event was dropped)"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+            {syncing ? 'Syncing…' : 'Sync from Clerk'}
+          </button>
+        )}
       </div>
 
       {loading ? (

@@ -70,16 +70,37 @@ export async function POST(req: Request) {
     const publicUserData = data.public_user_data as Record<string, unknown>
     const role = (data.role as string) === 'org:admin' ? 'admin' : 'editor'
 
-    // Ensure user row exists (may arrive before user.created in rare cases)
-    const userRows = await sql`
-      SELECT id FROM users WHERE clerk_user_id = ${publicUserData.user_id as string}
-    `
-    if (!userRows[0]) return Response.json({ ok: true })
+    // If user.created hasn't been processed yet (common race when an admin
+    // invites someone who then signs up), synthesize a user row from the
+    // membership payload. Clerk's public_user_data includes enough context
+    // to bootstrap. The next user.* event will fill in anything missing.
+    const clerkUserId = publicUserData.user_id as string
+    const identifier = (publicUserData.identifier as string) ?? ''
+    const firstName = (publicUserData.first_name as string) ?? ''
+    const lastName = (publicUserData.last_name as string) ?? ''
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || null
+    const imageUrl = (publicUserData.image_url as string) ?? null
+    // users.email is NOT NULL; if identifier is a phone not an email, fall back
+    // to a synthetic placeholder so the insert doesn't fail. Will be overwritten
+    // by the later user.created/updated event.
+    const email = identifier.includes('@') ? identifier : `${clerkUserId}@clerk.local`
 
+    await sql`
+      INSERT INTO users (clerk_user_id, email, full_name, avatar_url)
+      VALUES (${clerkUserId}, ${email}, ${fullName}, ${imageUrl})
+      ON CONFLICT (clerk_user_id) DO UPDATE
+        SET email = COALESCE(NULLIF(EXCLUDED.email, ''), users.email),
+            full_name = COALESCE(EXCLUDED.full_name, users.full_name),
+            avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url)
+    `
+
+    const userRows = await sql`
+      SELECT id FROM users WHERE clerk_user_id = ${clerkUserId}
+    `
     const orgRows = await sql`
       SELECT id FROM organizations WHERE clerk_org_id = ${orgData.id as string}
     `
-    if (!orgRows[0]) return Response.json({ ok: true })
+    if (!userRows[0] || !orgRows[0]) return Response.json({ ok: true })
 
     await sql`
       INSERT INTO org_members (org_id, user_id, role, joined_at)
