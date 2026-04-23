@@ -5,6 +5,7 @@ import { OrganizationProfile } from '@clerk/nextjs'
 import type { TemplateField } from '@/lib/ai'
 import { useToast } from '@/components/ui/Toast'
 import TeamSection from '@/components/TeamSection'
+import ReminderTemplatesEditor from '@/components/ReminderTemplatesEditor'
 
 export default function SettingsPage() {
   const toast = useToast()
@@ -171,6 +172,11 @@ export default function SettingsPage() {
       {/* Team roles & titles (Quorum-level) */}
       <div className={sectionClass}>
         <TeamSection />
+      </div>
+
+      {/* Event reminder templates */}
+      <div className={sectionClass}>
+        <ReminderTemplatesEditor />
       </div>
 
       {/* Clerk org profile (invite, leave, etc.) */}

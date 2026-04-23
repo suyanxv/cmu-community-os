@@ -116,6 +116,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Auto-generate reminders from org-level templates
+    try {
+      const orgRows = await sql`
+        SELECT settings->'reminder_templates' AS templates
+        FROM organizations WHERE id = ${ctx.orgId}
+      `
+      interface Template { id: string; title: string; description?: string; days_before: number; priority: 'high' | 'medium' | 'low' }
+      const templates = (orgRows[0]?.templates as Template[] | null) ?? []
+      const eventDateStr = eventDate // YYYY-MM-DD
+      if (templates.length > 0 && eventDateStr) {
+        const [y, m, d] = eventDateStr.split('-').map(Number)
+        const eventDateMs = Date.UTC(y, m - 1, d)
+        const todayMidnightMs = Date.UTC(
+          new Date().getUTCFullYear(),
+          new Date().getUTCMonth(),
+          new Date().getUTCDate()
+        )
+
+        for (const tpl of templates) {
+          if (!tpl.title) continue
+          const dueMs = eventDateMs - tpl.days_before * 86_400_000
+          const dueDate = new Date(dueMs).toISOString().slice(0, 10)
+          const isPastDue = dueMs < todayMidnightMs
+          const status = isPastDue ? 'done' : 'pending'
+          const description = isPastDue
+            ? `[Not applicable — due date was already past at event creation] ${tpl.description ?? ''}`.trim()
+            : (tpl.description ?? null)
+
+          await sql`
+            INSERT INTO reminders (
+              org_id, event_id, assigned_to, title, description, due_date,
+              status, completed_at, priority, ai_generated, created_by
+            ) VALUES (
+              ${ctx.orgId}, ${eventId}, ${null},
+              ${tpl.title}, ${description || null},
+              ${dueDate}::date,
+              ${status},
+              ${isPastDue ? new Date().toISOString() : null},
+              ${tpl.priority ?? 'medium'},
+              ${false},
+              ${ctx.userId}
+            )
+          `
+        }
+      }
+    } catch (err) {
+      // Non-fatal: event still created successfully
+      console.error('Failed to apply reminder templates:', err)
+    }
+
     logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: eventId, action: 'created', detail: { name: data.name } })
 
     return Response.json({ data: rows[0] }, { status: 201 })
