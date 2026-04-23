@@ -136,7 +136,12 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error ?? 'Failed to save event')
+      if (Array.isArray(data.fields) && data.fields.length > 0) {
+        const list = data.fields.map((f: { label: string; message: string }) => `• ${f.label}: ${f.message}`).join('\n')
+        setError(`Please fix the following:\n${list}`)
+      } else {
+        setError(data.error ?? 'Failed to save event')
+      }
       setSaving(false)
       return
     }
@@ -152,7 +157,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm whitespace-pre-line">
           {error}
         </div>
       )}
