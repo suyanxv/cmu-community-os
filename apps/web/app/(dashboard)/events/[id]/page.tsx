@@ -78,24 +78,7 @@ export default async function EventDetailPage({ params }: Params) {
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-sm text-gray-500">Confirmed RSVPs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{event.rsvp_count}</p>
-          {event.max_capacity && (
-            <p className="text-xs text-gray-400 mt-1">of {event.max_capacity} capacity</p>
-          )}
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-sm text-gray-500">Total Guests</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{event.total_guests}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-sm text-gray-500">Channels</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{(event.channels as string[]).length}</p>
-          <p className="text-xs text-gray-400 mt-1">{(event.channels as string[]).join(', ')}</p>
-        </div>
-      </div>
+      <CapacityStats rsvpCount={event.rsvp_count} totalGuests={event.total_guests} maxCapacity={event.max_capacity} channels={event.channels as string[]} />
 
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -129,6 +112,56 @@ export default async function EventDetailPage({ params }: Params) {
 
 interface SpeakerEntry { name?: string; title?: string; bio?: string }
 interface SponsorEntry { name?: string; tier?: string }
+
+function CapacityStats({
+  rsvpCount,
+  totalGuests,
+  maxCapacity,
+  channels,
+}: {
+  rsvpCount: number
+  totalGuests: number
+  maxCapacity: number | null
+  channels: string[]
+}) {
+  const pct = maxCapacity && maxCapacity > 0
+    ? Math.min(100, Math.round((totalGuests / maxCapacity) * 100))
+    : null
+  const barColor =
+    pct === null ? ''
+    : pct >= 100 ? 'bg-red-500'
+    : pct >= 80  ? 'bg-butter-500'
+    : 'bg-sage-500'
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <p className="text-sm text-gray-500">Confirmed RSVPs</p>
+        <p className="text-2xl font-bold text-gray-900 mt-1">{rsvpCount}</p>
+        {maxCapacity && (
+          <p className="text-xs text-gray-400 mt-1">of {maxCapacity} capacity</p>
+        )}
+      </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <p className="text-sm text-gray-500">Total Guests</p>
+        <div className="flex items-baseline gap-2 mt-1">
+          <p className="text-2xl font-bold text-gray-900">{totalGuests}</p>
+          {pct !== null && <p className={`text-sm font-medium ${pct >= 100 ? 'text-red-500' : pct >= 80 ? 'text-butter-700' : 'text-sage-700'}`}>{pct}%</p>}
+        </div>
+        {pct !== null && (
+          <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden mt-2">
+            <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
+          </div>
+        )}
+      </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <p className="text-sm text-gray-500">Channels</p>
+        <p className="text-2xl font-bold text-gray-900 mt-1">{channels.length}</p>
+        <p className="text-xs text-gray-400 mt-1 truncate">{channels.join(', ') || 'None'}</p>
+      </div>
+    </div>
+  )
+}
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (

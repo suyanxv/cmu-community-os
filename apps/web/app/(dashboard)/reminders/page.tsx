@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 interface Reminder {
   id: string
@@ -26,6 +27,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 function RemindersContent() {
   const searchParams = useSearchParams()
   const eventId = searchParams.get('event_id')
+  const toast = useToast()
 
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,25 +49,32 @@ function RemindersContent() {
 
   useEffect(() => { fetchReminders() }, [fetchReminders])
 
-  const markDone = async (id: string) => {
+  const markDone = async (id: string, title: string) => {
     await fetch(`/api/reminders/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'done' }),
     })
+    toast.success(`"${title}" marked done`)
     await fetchReminders()
   }
 
   const addReminder = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await fetch('/api/reminders', {
+    const res = await fetch('/api/reminders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, event_id: form.event_id || null }),
     })
-    setForm({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '' })
-    setShowForm(false)
+    if (res.ok) {
+      toast.success('Reminder added')
+      setForm({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '' })
+      setShowForm(false)
+    } else {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to add reminder')
+    }
     setSaving(false)
     await fetchReminders()
   }
@@ -130,7 +139,7 @@ function RemindersContent() {
           {reminders.map((r) => (
             <div key={r.id} className={`bg-white border rounded-xl p-4 flex items-start gap-4 ${r.status === 'done' ? 'opacity-60' : 'border-gray-200'}`}>
               <button
-                onClick={() => r.status !== 'done' && markDone(r.id)}
+                onClick={() => r.status !== 'done' && markDone(r.id, r.title)}
                 className={`mt-0.5 h-5 w-5 rounded-full border-2 flex-shrink-0 transition-colors ${
                   r.status === 'done'
                     ? 'bg-green-500 border-green-500'

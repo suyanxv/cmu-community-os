@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 type Speaker = { name: string; title: string; bio: string }
 type Sponsor = { name: string; tier: string }
@@ -88,6 +89,7 @@ interface EventFormProps {
 
 export default function EventForm({ initialValues, eventId }: EventFormProps) {
   const router = useRouter()
+  const toast = useToast()
   const [form, setForm] = useState<EventFormData>({ ...defaultValues, ...initialValues })
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -160,13 +162,15 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ channels: form.channels }),
         })
+        toast.success('Event created and content generated')
       } catch {
-        // Non-fatal — user can regenerate from content page
+        toast.error('Event created, but content generation failed. Try again from the Content page.')
       }
       router.push(`/events/${savedId}/content`)
       return
     }
 
+    toast.success(eventId ? 'Event updated' : 'Event created')
     router.push(`/events/${savedId}`)
   }
 

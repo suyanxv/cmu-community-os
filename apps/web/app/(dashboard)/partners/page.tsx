@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useToast } from '@/components/ui/Toast'
 
 interface Partner {
   id: string
@@ -21,6 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function PartnersPage() {
+  const toast = useToast()
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -45,8 +47,12 @@ export default function PartnersPage() {
     if (res.ok) {
       const { data } = await res.json()
       setPartners((prev) => [data, ...prev])
+      toast.success(`${data.company_name} added`)
       setForm({ company_name: '', contact_name: '', email: '', type: 'sponsor', tier: '', status: 'prospect', notes: '' })
       setShowForm(false)
+    } else {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to add partner')
     }
     setSaving(false)
   }

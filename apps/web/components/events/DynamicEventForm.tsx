@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { TemplateField } from '@/lib/ai'
+import { useToast } from '@/components/ui/Toast'
 
 interface DynamicEventFormProps {
   schema: TemplateField[]
@@ -49,6 +50,7 @@ const TIMEZONE_OPTIONS = [
 
 export default function DynamicEventForm({ schema, eventId, initialCore, initialCustom }: DynamicEventFormProps) {
   const router = useRouter()
+  const toast = useToast()
   const [core, setCore] = useState<CoreValues>({
     name: '',
     event_date: '',
@@ -123,13 +125,15 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ channels: core.channels }),
         })
+        toast.success('Event created and content generated')
       } catch {
-        // Non-fatal — user can regenerate from content page
+        toast.error('Event created, but content generation failed')
       }
       router.push(`/events/${savedId}/content`)
       return
     }
 
+    toast.success(eventId ? 'Event updated' : 'Event created')
     router.push(`/events/${savedId}`)
   }
 

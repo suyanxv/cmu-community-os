@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useToast } from '@/components/ui/Toast'
 
 interface Rsvp {
   id: string
@@ -19,6 +20,7 @@ interface Summary { confirmed: number; waitlist: number; cancelled: number; tota
 
 export default function RsvpPage() {
   const { id: eventId } = useParams<{ id: string }>()
+  const toast = useToast()
   const [rsvps, setRsvps] = useState<Rsvp[]>([])
   const [summary, setSummary] = useState<Summary>({ confirmed: 0, waitlist: 0, cancelled: 0, total_guests: 0 })
   const [loading, setLoading] = useState(true)
@@ -41,13 +43,19 @@ export default function RsvpPage() {
   const addRsvp = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await fetch(`/api/events/${eventId}/rsvps`, {
+    const res = await fetch(`/api/events/${eventId}/rsvps`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, guest_count: parseInt(form.guest_count) }),
     })
-    setForm({ name: '', email: '', phone: '', guest_count: '1', notes: '', status: 'confirmed' })
-    setShowForm(false)
+    if (res.ok) {
+      toast.success(`${form.name} added to RSVPs`)
+      setForm({ name: '', email: '', phone: '', guest_count: '1', notes: '', status: 'confirmed' })
+      setShowForm(false)
+    } else {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to add RSVP')
+    }
     setSaving(false)
     await fetchRsvps()
   }
@@ -64,6 +72,7 @@ export default function RsvpPage() {
   const deleteRsvp = async (id: string, name: string) => {
     if (!confirm(`Remove ${name} from the RSVP list?`)) return
     await fetch(`/api/events/${eventId}/rsvps/${id}`, { method: 'DELETE' })
+    toast.success(`${name} removed`)
     await fetchRsvps()
   }
 
