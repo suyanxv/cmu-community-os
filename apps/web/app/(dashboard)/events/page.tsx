@@ -18,7 +18,7 @@ export default async function EventsPage() {
         SELECT id, name, status, event_date, start_time, location_name, channels,
                (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
         FROM events
-        WHERE org_id = ${orgId}
+        WHERE org_id = ${orgId} AND status != 'archived'
         ORDER BY event_date DESC
         LIMIT 50
       `

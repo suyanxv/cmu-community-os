@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
+import DeleteEventButton from '@/components/events/DeleteEventButton'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -52,7 +53,8 @@ export default async function EventDetailPage({ params }: Params) {
             {event.location_name && ` · ${event.location_name}`}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <DeleteEventButton eventId={id} eventName={event.name} />
           <Link href={`/events/${id}/edit`} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
             Edit
           </Link>

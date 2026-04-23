@@ -108,10 +108,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const ctx = await requireAdmin()
     const { id } = await params
-    await sql`
-      UPDATE events SET status = 'archived', updated_at = NOW()
-      WHERE id = ${id} AND org_id = ${ctx.orgId}
-    `
+    await sql`DELETE FROM events WHERE id = ${id} AND org_id = ${ctx.orgId}`
     logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: id, action: 'deleted' })
     return Response.json({ ok: true })
   } catch (err) {
