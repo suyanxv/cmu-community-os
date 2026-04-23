@@ -30,7 +30,8 @@ export default function PartnersPage() {
   useEffect(() => {
     fetch('/api/partners')
       .then((r) => r.json())
-      .then((d) => { setPartners(d.data); setLoading(false) })
+      .then((d) => { setPartners(d.data ?? []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const addPartner = async (e: React.FormEvent) => {
