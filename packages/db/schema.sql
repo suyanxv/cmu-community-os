@@ -237,7 +237,7 @@ CREATE INDEX IF NOT EXISTS idx_partner_comms_org_id     ON partner_communication
 CREATE TABLE IF NOT EXISTS reminders (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id          UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  event_id        UUID REFERENCES events(id) ON DELETE SET NULL,
+  event_id        UUID REFERENCES events(id) ON DELETE CASCADE,
   assigned_to     UUID REFERENCES users(id) ON DELETE SET NULL,
 
   title           TEXT NOT NULL,
