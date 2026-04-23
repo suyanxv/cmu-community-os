@@ -67,33 +67,38 @@ export default function PermissionsReference() {
         </div>
       </div>
 
+      {/* Scrollable body keeps the table from dominating the Settings page.
+          Headers stay pinned to the top of the scroll container so column
+          labels remain visible as you scroll through capabilities. */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-stone-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-4 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wide">Capability</th>
-              <th className="text-center px-4 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wide w-24">Admin</th>
-              <th className="text-center px-4 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wide w-24">Editor</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {ROWS.map((r) => {
-              const adminCan = r.roles.includes('admin')
-              const editorCan = r.roles.includes('editor')
-              return (
-                <tr key={r.capability} className="hover:bg-stone-50">
-                  <td className="px-4 py-2.5 text-gray-900">{r.capability}</td>
-                  <td className="px-4 py-2.5 text-center">
-                    {adminCan ? <span className="text-sage-600 font-medium">✓</span> : <span className="text-gray-300">—</span>}
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    {editorCan ? <span className="text-sage-600 font-medium">✓</span> : <span className="text-gray-300">—</span>}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <div className="max-h-80 overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-stone-50">
+              <tr>
+                <th className="sticky top-0 bg-stone-50 text-left px-4 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wide border-b border-gray-200">Capability</th>
+                <th className="sticky top-0 bg-stone-50 text-center px-4 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wide w-24 border-b border-gray-200">Admin</th>
+                <th className="sticky top-0 bg-stone-50 text-center px-4 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wide w-24 border-b border-gray-200">Editor</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {ROWS.map((r) => {
+                const adminCan = r.roles.includes('admin')
+                const editorCan = r.roles.includes('editor')
+                return (
+                  <tr key={r.capability} className="hover:bg-stone-50">
+                    <td className="px-4 py-2.5 text-gray-900">{r.capability}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      {adminCan ? <span className="text-sage-600 font-medium">✓</span> : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      {editorCan ? <span className="text-sage-600 font-medium">✓</span> : <span className="text-gray-300">—</span>}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <p className="text-xs text-gray-400 mt-3">
