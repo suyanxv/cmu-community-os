@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 export default function DuplicateEventButton({ eventId }: { eventId: string }) {
   const router = useRouter()
+  const toast = useToast()
   const [working, setWorking] = useState(false)
 
   const handleDuplicate = async () => {
@@ -12,11 +14,12 @@ export default function DuplicateEventButton({ eventId }: { eventId: string }) {
     const res = await fetch(`/api/events/${eventId}/duplicate`, { method: 'POST' })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      alert(data.error ?? 'Failed to duplicate event')
+      toast.error(data.error ?? 'Failed to duplicate event')
       setWorking(false)
       return
     }
     const { data } = await res.json()
+    toast.success(`Created "${data.name}" — adjust the details and save`)
     // Land on edit page so the user can adjust the date / name
     router.push(`/events/${data.id}/edit`)
   }

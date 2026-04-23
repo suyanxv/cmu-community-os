@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 interface ContentCardProps {
   contentId: string
@@ -24,6 +25,7 @@ const CHANNEL_LABELS: Record<string, { label: string; icon: string; limit: numbe
 export default function ContentCard({ contentId, eventId, channel, subjectLine, body, characterCount, version, onRegenerate }: ContentCardProps) {
   const [copied, setCopied] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
+  const toast = useToast()
 
   const info = CHANNEL_LABELS[channel] ?? { label: channel, icon: '📄', limit: null }
 
@@ -33,6 +35,7 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
     await navigator.clipboard.writeText(copyText)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    toast.success(`${info.label} content copied to clipboard`)
 
     // Track copy
     await fetch(`/api/events/${eventId}/content`, {

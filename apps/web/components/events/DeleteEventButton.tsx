@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 export default function DeleteEventButton({ eventId, eventName }: { eventId: string; eventName: string }) {
   const router = useRouter()
+  const toast = useToast()
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -19,6 +21,7 @@ export default function DeleteEventButton({ eventId, eventName }: { eventId: str
       setDeleting(false)
       return
     }
+    toast.success(`"${eventName}" deleted`)
     router.push('/events')
     router.refresh()
   }

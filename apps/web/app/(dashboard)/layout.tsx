@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { OrganizationSwitcher, UserButton } from '@clerk/nextjs'
+import { ToastProvider } from '@/components/ui/Toast'
 
 const navItems = [
   { href: '/events', label: 'Events', icon: '📅' },
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   })
 
   return (
+    <ToastProvider>
     <div className="flex h-screen bg-stone-50">
 
       {/* ── Desktop sidebar ── */}
@@ -133,5 +135,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </main>
 
     </div>
+    </ToastProvider>
   )
 }
