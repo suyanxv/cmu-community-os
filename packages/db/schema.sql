@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS events (
   tags                TEXT[] DEFAULT '{}',
   notes               TEXT,
   custom_fields       JSONB NOT NULL DEFAULT '{}',
+  checkin_config      JSONB NOT NULL DEFAULT '{}',  -- { whatsapp_url, welcome_message }
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -138,6 +139,12 @@ CREATE TABLE IF NOT EXISTS rsvps (
   status          TEXT NOT NULL DEFAULT 'confirmed',
   guest_count     INT NOT NULL DEFAULT 1,
   check_in_at     TIMESTAMPTZ,
+
+  -- Check-in extra fields (captured via the public /check-in form)
+  graduation_year TEXT,
+  school          TEXT,
+  how_heard       TEXT,
+  whatsapp_joined BOOLEAN DEFAULT FALSE,
 
   source          TEXT DEFAULT 'manual',
   notes           TEXT,

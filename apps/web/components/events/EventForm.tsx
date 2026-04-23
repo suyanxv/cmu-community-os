@@ -31,6 +31,8 @@ interface EventFormData {
   max_capacity: string
   tags: string
   notes: string
+  checkin_whatsapp_url: string
+  checkin_welcome_message: string
 }
 
 const CHANNEL_OPTIONS = [
@@ -80,6 +82,8 @@ const defaultValues: EventFormData = {
   max_capacity: '',
   tags: '',
   notes: '',
+  checkin_whatsapp_url: '',
+  checkin_welcome_message: '',
 }
 
 interface EventFormProps {
@@ -129,6 +133,10 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       ...form,
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+      checkin_config: {
+        ...(form.checkin_whatsapp_url    ? { whatsapp_url:    form.checkin_whatsapp_url }    : {}),
+        ...(form.checkin_welcome_message ? { welcome_message: form.checkin_welcome_message } : {}),
+      },
     }
 
     const res = await fetch(eventId ? `/api/events/${eventId}` : '/api/events', {
@@ -379,6 +387,35 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         <div>
           <label className={labelClass}>Max Capacity</label>
           <input type="number" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="100" className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500" />
+        </div>
+      </div>
+
+      {/* Check-in */}
+      <div className={sectionClass}>
+        <h2 className="text-base font-semibold text-gray-900">Day-of Check-in</h2>
+        <p className="text-xs text-gray-500 -mt-2">
+          Attendees scan a QR code at the event to check themselves in. The QR is generated automatically — configure what they see below.
+        </p>
+        <div>
+          <label className={labelClass}>WhatsApp Community Link (optional)</label>
+          <input
+            type="url"
+            value={form.checkin_whatsapp_url}
+            onChange={(e) => set('checkin_whatsapp_url', e.target.value)}
+            placeholder="https://chat.whatsapp.com/…"
+            className={inputClass}
+          />
+          <p className="text-xs text-gray-400 mt-1">Shown on the thank-you screen after check-in.</p>
+        </div>
+        <div>
+          <label className={labelClass}>Welcome Message (optional)</label>
+          <textarea
+            value={form.checkin_welcome_message}
+            onChange={(e) => set('checkin_welcome_message', e.target.value)}
+            rows={2}
+            placeholder="Welcome! Fill this out to get your wristband."
+            className={inputClass}
+          />
         </div>
       </div>
 

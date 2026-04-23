@@ -86,6 +86,8 @@ export default async function EditEventPage({ params }: Params) {
     max_capacity: event.max_capacity ? String(event.max_capacity) : '',
     tags: Array.isArray(event.tags) ? event.tags.join(', ') : '',
     notes: event.notes ?? '',
+    checkin_whatsapp_url: (event.checkin_config as Record<string, string> | null)?.whatsapp_url ?? '',
+    checkin_welcome_message: (event.checkin_config as Record<string, string> | null)?.welcome_message ?? '',
   }
 
   return (

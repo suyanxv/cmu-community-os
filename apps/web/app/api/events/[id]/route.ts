@@ -31,6 +31,7 @@ const UpdateEventSchema = z.object({
   tags: z.array(z.string()).optional(),
   notes: z.string().optional().nullable(),
   custom_fields: z.record(z.string(), z.any()).optional(),
+  checkin_config: z.record(z.string(), z.any()).optional(),
 })
 
 type Params = { params: Promise<{ id: string }> }
@@ -96,6 +97,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         event_mode       = COALESCE(${data.event_mode ?? null}, event_mode),
         end_date         = CASE WHEN ${'end_date' in data} THEN ${data.end_date ?? null} ELSE end_date END,
         custom_fields    = CASE WHEN ${'custom_fields' in data} THEN ${JSON.stringify(data.custom_fields ?? {})}::jsonb ELSE custom_fields END,
+        checkin_config   = CASE WHEN ${'checkin_config' in data} THEN ${JSON.stringify(data.checkin_config ?? {})}::jsonb ELSE checkin_config END,
         updated_at       = NOW()
       WHERE id = ${id} AND org_id = ${ctx.orgId}
       RETURNING *

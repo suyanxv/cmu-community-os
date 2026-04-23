@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
+import CheckInCard from '@/components/events/CheckInCard'
 import DeleteEventButton from '@/components/events/DeleteEventButton'
 import DuplicateEventButton from '@/components/events/DuplicateEventButton'
 import EventPartnersSection from '@/components/events/EventPartnersSection'
@@ -28,6 +29,7 @@ export default async function EventDetailPage({ params }: Params) {
     SELECT e.*,
       (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id AND r.status = 'confirmed')::int AS rsvp_count,
       (SELECT COALESCE(SUM(guest_count), 0) FROM rsvps r WHERE r.event_id = e.id AND r.status = 'confirmed')::int AS total_guests,
+      (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id AND r.check_in_at IS NOT NULL)::int AS checked_in_count,
       o.settings->'event_template_schema' AS template_schema
     FROM events e
     JOIN organizations o ON o.id = e.org_id
@@ -103,6 +105,9 @@ export default async function EventDetailPage({ params }: Params) {
 
       {/* Event details */}
       <EventDetails event={event} />
+
+      {/* Check-in */}
+      <CheckInCard eventId={id} checkedInCount={event.checked_in_count ?? 0} rsvpCount={event.rsvp_count ?? 0} />
 
       {/* Partners linked to this event */}
       <EventPartnersSection eventId={id} />
