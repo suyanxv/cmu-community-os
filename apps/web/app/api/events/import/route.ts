@@ -5,6 +5,7 @@ import { sql } from '@/lib/db'
 import { parseBulkEvents } from '@/lib/ai'
 import { logActivity } from '@/lib/activity'
 import { errorResponse } from '@/lib/errors'
+import { applyReminderTemplates } from '@/lib/reminder-templates'
 
 // Simple in-memory rate limiter: 5 parses per org per hour (each call uses Sonnet)
 const parseLimits = new Map<string, { count: number; resetAt: number }>()
@@ -81,6 +82,9 @@ export async function PUT(req: NextRequest) {
     const createdIds: string[] = []
     for (const e of valid) {
       const status = e.is_past ? 'past' : 'draft'
+      const normalizedEventDate = e.event_date ? String(e.event_date).slice(0, 10) : null
+      const normalizedEndDate   = e.end_date   ? String(e.end_date).slice(0, 10)   : null
+
       const rows = await sql`
         INSERT INTO events (
           org_id, created_by, name, status,
@@ -89,7 +93,8 @@ export async function PUT(req: NextRequest) {
           description, max_capacity, tags
         ) VALUES (
           ${ctx.orgId}, ${ctx.userId}, ${e.name}, ${status},
-          ${e.event_date}, ${e.end_date ?? null},
+          ${normalizedEventDate}::date,
+          ${normalizedEndDate}::date,
           ${e.start_time ?? null}, ${e.end_time ?? null}, ${e.timezone},
           ${e.location_name ?? null}, ${e.location_address ?? null},
           ${e.is_virtual}, ${e.event_mode},
@@ -98,7 +103,18 @@ export async function PUT(req: NextRequest) {
         )
         RETURNING id
       `
-      createdIds.push(rows[0].id as string)
+      const newId = rows[0].id as string
+      createdIds.push(newId)
+
+      // Apply org-level reminder templates to each imported event too
+      if (normalizedEventDate) {
+        await applyReminderTemplates({
+          orgId: ctx.orgId,
+          eventId: newId,
+          eventDate: normalizedEventDate,
+          createdBy: ctx.userId,
+        })
+      }
     }
 
     logActivity({
