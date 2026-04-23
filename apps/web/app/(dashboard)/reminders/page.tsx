@@ -323,8 +323,8 @@ function ReminderList({
             {r.status === 'done' && <Check className="w-3 h-3 text-white m-auto" strokeWidth={3} />}
           </button>
           <div className="flex-1 min-w-0">
-            <p className={`font-medium text-gray-900 ${r.status === 'done' ? 'line-through' : ''}`}>{r.title}</p>
-            {r.description && <p className="text-sm text-gray-500 mt-0.5">{r.description}</p>}
+            <p className={`font-medium text-gray-900 break-words ${r.status === 'done' ? 'line-through' : ''}`}>{r.title}</p>
+            {r.description && <p className="text-sm text-gray-500 mt-0.5 break-words whitespace-pre-wrap">{r.description}</p>}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[r.priority]}`}>{r.priority}</span>
               {r.event_name && (

@@ -108,7 +108,7 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
             <p className="text-sm font-medium text-gray-900">{subjectLine}</p>
           </div>
         )}
-        <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{body}</pre>
+        <pre className="text-sm text-gray-700 whitespace-pre-wrap break-words font-sans leading-relaxed">{body}</pre>
       </div>
     </div>
   )

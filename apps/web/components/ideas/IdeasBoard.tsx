@@ -354,7 +354,7 @@ function IdeaCard({
       </div>
 
       {idea.notes && (
-        <button onClick={() => setEditing(true)} className="block w-full text-left text-sm text-gray-600 whitespace-pre-wrap mb-2 hover:text-gray-800">
+        <button onClick={() => setEditing(true)} className="block w-full text-left text-sm text-gray-600 whitespace-pre-wrap break-words mb-2 hover:text-gray-800">
           {idea.notes}
         </button>
       )}

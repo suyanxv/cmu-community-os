@@ -388,7 +388,7 @@ export default function PartnerDetailPage() {
           {!partner.email && !partner.phone && !partner.website && !partner.linkedin_url && (
             <p className="text-sm text-gray-400">No contact info on file. Click Edit to add some.</p>
           )}
-          {partner.notes && <p className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-100 whitespace-pre-wrap">{partner.notes}</p>}
+          {partner.notes && <p className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-100 whitespace-pre-wrap break-words">{partner.notes}</p>}
         </div>
       )}
 
@@ -516,7 +516,7 @@ export default function PartnerDetailPage() {
                   <span className="text-xs text-gray-400 ml-auto">{new Date(c.created_at).toLocaleDateString()}</span>
                 </div>
                 {c.subject && <p className="text-xs font-medium text-gray-700 mb-1">{c.subject}</p>}
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{c.body}</p>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap break-words">{c.body}</p>
               </div>
             ))}
           </div>

@@ -144,7 +144,7 @@ export default async function PublicEventPage({ params }: Params) {
         {/* Description */}
         {e.description && (
           <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{e.description as string}</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{e.description as string}</p>
           </div>
         )}
 
@@ -152,7 +152,7 @@ export default async function PublicEventPage({ params }: Params) {
         {e.agenda && (
           <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-2">Agenda</h2>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">{e.agenda as string}</p>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap break-words">{e.agenda as string}</p>
           </div>
         )}
 

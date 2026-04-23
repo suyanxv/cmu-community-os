@@ -203,7 +203,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   return (
     <div className="py-3 border-b border-gray-100 last:border-b-0">
       <dt className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">{label}</dt>
-      <dd className="text-sm text-gray-900 whitespace-pre-wrap">{children}</dd>
+      <dd className="text-sm text-gray-900 whitespace-pre-wrap break-words">{children}</dd>
     </div>
   )
 }
