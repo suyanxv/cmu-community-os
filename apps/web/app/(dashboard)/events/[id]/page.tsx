@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
 import DeleteEventButton from '@/components/events/DeleteEventButton'
 import DuplicateEventButton from '@/components/events/DuplicateEventButton'
+import EventPartnersSection from '@/components/events/EventPartnersSection'
 import GenerateRemindersButton from '@/components/reminders/GenerateRemindersButton'
 
 type Params = { params: Promise<{ id: string }> }
@@ -113,6 +114,9 @@ export default async function EventDetailPage({ params }: Params) {
 
       {/* Event details */}
       <EventDetails event={event} />
+
+      {/* Partners linked to this event */}
+      <EventPartnersSection eventId={id} />
     </div>
   )
 }
