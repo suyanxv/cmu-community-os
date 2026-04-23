@@ -6,6 +6,7 @@ import type { TemplateField } from '@/lib/ai'
 import { useToast } from '@/components/ui/Toast'
 import TeamSection from '@/components/TeamSection'
 import ReminderTemplatesEditor from '@/components/ReminderTemplatesEditor'
+import PermissionsReference from '@/components/PermissionsReference'
 
 export default function SettingsPage() {
   const toast = useToast()
@@ -172,6 +173,11 @@ export default function SettingsPage() {
       {/* Team roles & titles (Quorum-level) */}
       <div className={sectionClass}>
         <TeamSection />
+      </div>
+
+      {/* Roles & permissions reference */}
+      <div className={sectionClass}>
+        <PermissionsReference />
       </div>
 
       {/* Event reminder templates */}
