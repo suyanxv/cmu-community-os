@@ -16,6 +16,8 @@ interface EventRow {
   event_date: string
   start_time: string | null
   location_name: string | null
+  location_address: string | null
+  event_mode: 'in_person' | 'virtual' | 'hybrid'
   channels: string[]
   rsvp_count: number
   max_capacity: number | null
@@ -48,7 +50,7 @@ export default async function EventsPage() {
     SELECT
       id, name, status,
       to_char(event_date, 'YYYY-MM-DD') AS event_date,
-      start_time, location_name, channels, max_capacity,
+      start_time, location_name, location_address, event_mode, channels, max_capacity,
       to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
       (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
     FROM events

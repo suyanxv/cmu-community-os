@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { CalendarDays, MapPin, Video, Users as UsersIcon } from 'lucide-react'
 import { formatEventDate, localToday } from '@/lib/dates'
 
 interface EventRow {
@@ -11,6 +12,8 @@ interface EventRow {
   event_date: string
   start_time: string | null
   location_name: string | null
+  location_address: string | null
+  event_mode: 'in_person' | 'virtual' | 'hybrid'
   channels: string[]
   rsvp_count: number
   max_capacity: number | null
@@ -152,25 +155,39 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
     : capacityPct >= 80  ? 'bg-butter-500'
     : 'bg-sage-500'
 
+  // Build the location text honestly across all event modes
+  const mode = event.event_mode ?? 'in_person'
+  const locationText =
+    mode === 'virtual'
+      ? 'Virtual'
+      : [event.location_name, event.location_address].filter(Boolean).join(' · ') ||
+        (mode === 'hybrid' ? 'Hybrid' : 'Location TBD')
+  const LocationIcon = mode === 'virtual' ? Video : MapPin
+
   return (
     <Link
       href={`/events/${event.id}`}
       className={`block bg-white border border-gray-200 rounded-xl p-4 hover:border-sage-300 hover:shadow-sm transition-all ${dim ? 'opacity-75 hover:opacity-100' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${statusStyle}`}>
               {event.status}
             </span>
           </div>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {formatEventDate(event.event_date)}
-            {event.location_name ? ` · ${event.location_name}` : ''}
+          <p className="flex items-center gap-1.5 text-sm text-gray-500">
+            <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" strokeWidth={1.75} />
+            <span className="truncate">{formatEventDate(event.event_date)}</span>
+          </p>
+          <p className="flex items-center gap-1.5 text-sm text-gray-500">
+            <LocationIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" strokeWidth={1.75} />
+            <span className="truncate">{locationText}</span>
+            {mode === 'hybrid' && <span className="text-[11px] bg-lavender-100 text-lavender-700 px-1.5 py-0.5 rounded">Hybrid</span>}
           </p>
           {event.channels && event.channels.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <div className="flex items-center gap-1.5 pt-1 flex-wrap">
               {event.channels.map((ch) => (
                 <span key={ch} className="text-[11px] bg-stone-100 text-gray-600 px-1.5 py-0.5 rounded">
                   {ch}
@@ -191,7 +208,10 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
               </div>
             </div>
           ) : (
-            <span className="text-sm text-gray-500">{event.rsvp_count} guest{event.rsvp_count === 1 ? '' : 's'}</span>
+            <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+              <UsersIcon className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.75} />
+              {event.rsvp_count}
+            </span>
           )}
         </div>
       </div>
