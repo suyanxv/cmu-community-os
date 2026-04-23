@@ -5,6 +5,7 @@ import { sql } from '@/lib/db'
 import { logActivity } from '@/lib/activity'
 import { errorResponse } from '@/lib/errors'
 import { applyReminderTemplates } from '@/lib/reminder-templates'
+import { syncEventCoHostLinks } from '@/lib/co-hosts'
 
 const CreateEventSchema = z.object({
   name: z.string().min(1),
@@ -143,6 +144,12 @@ export async function POST(req: NextRequest) {
         eventDate,
         createdBy: ctx.userId,
       })
+    }
+
+    // Mirror co_hosts into event_partners (role='co_host') so partner detail
+    // pages reflect the link.
+    if (data.co_hosts.length > 0) {
+      await syncEventCoHostLinks({ orgId: ctx.orgId, eventId, coHostNames: data.co_hosts })
     }
 
     logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: eventId, action: 'created', detail: { name: data.name } })

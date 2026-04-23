@@ -4,6 +4,7 @@ import { requireOrgMember, requireAdmin } from '@/lib/auth'
 import { sql } from '@/lib/db'
 import { logActivity } from '@/lib/activity'
 import { ApiError, errorResponse } from '@/lib/errors'
+import { syncEventCoHostLinks } from '@/lib/co-hosts'
 
 const UpdateEventSchema = z.object({
   name: z.string().min(1).optional(),
@@ -143,6 +144,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (countAfter[0].n === 0) {
         throw new ApiError(400, 'None of the selected hosts are members of this org')
       }
+    }
+
+    // Mirror co_hosts into event_partners (role='co_host') so partner detail
+    // pages reflect the link. Only runs when the caller explicitly sent co_hosts.
+    if ('co_hosts' in data && data.co_hosts !== undefined) {
+      await syncEventCoHostLinks({ orgId: ctx.orgId, eventId: id, coHostNames: data.co_hosts })
     }
 
     logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: id, action: 'updated' })
