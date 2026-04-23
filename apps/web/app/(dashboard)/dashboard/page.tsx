@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { sql } from '@/lib/db'
-import { formatEventDate } from '@/lib/dates'
 import {
   CalendarDays, Bell, Plus, Upload, Users, MapPin, Video,
   ChevronRight, Sparkles, Check, Pencil, Trash2,

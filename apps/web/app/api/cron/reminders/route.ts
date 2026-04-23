@@ -158,8 +158,16 @@ async function handle(req: NextRequest) {
     }
 
     if (anySuccess) {
-      sent++
-      await sql`UPDATE reminders SET last_emailed_at = NOW() WHERE id = ${r.id}`
+      // Conditional update guards against a concurrent cron instance: only
+      // stamp if still NULL. Vercel Cron doesn't parallelize, but this is
+      // cheap defense-in-depth.
+      const claim = await sql`
+        UPDATE reminders SET last_emailed_at = NOW()
+        WHERE id = ${r.id} AND last_emailed_at IS NULL
+        RETURNING id
+      `
+      if (claim.length > 0) sent++
+      else skipped++ // another runner already stamped it
     } else {
       failed++
       // Don't stamp last_emailed_at — we'll retry tomorrow.

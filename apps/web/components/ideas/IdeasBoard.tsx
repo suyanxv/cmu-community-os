@@ -148,7 +148,7 @@ export default function IdeasBoard({ initialIdeas }: { initialIdeas: Idea[] }) {
         </button>
       </div>
       <p className="text-sm text-gray-500 mb-5 max-w-2xl">
-        A backlog for events you want to run someday. Capture the title plus whatever context matters (venue leads, contacts, seasonality). Promote an idea to a draft event when you're ready to commit.
+        A backlog for events you want to run someday. Capture the title plus whatever context matters (venue leads, contacts, seasonality). Promote an idea to a draft event when you&apos;re ready to commit.
       </p>
 
       {/* Tabs */}
@@ -219,7 +219,7 @@ export default function IdeasBoard({ initialIdeas }: { initialIdeas: Idea[] }) {
           <p className="text-4xl mb-3">💡</p>
           <p className="text-lg font-medium text-gray-900">No ideas yet</p>
           <p className="text-gray-500 mt-1 mb-6 max-w-md mx-auto px-4">
-            Drop in the events you're thinking about running, even half-formed. Board members can add context over time, then promote one when it's ready.
+            Drop in the events you&apos;re thinking about running, even half-formed. Board members can add context over time, then promote one when it&apos;s ready.
           </p>
           <button
             onClick={() => setAddingOpen(true)}

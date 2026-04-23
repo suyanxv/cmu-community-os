@@ -11,8 +11,8 @@ type Params = { params: Promise<{ id: string }> }
 const CreateBroadcastSchema = z.object({
   channel: z.enum(['email', 'whatsapp']),
   kind: z.enum(['announcement', 'reminder', 'thank_you', 'custom']),
-  subject: z.string().optional().nullable(),
-  body: z.string().min(1),
+  subject: z.string().max(200).optional().nullable(),
+  body: z.string().min(1).max(20000),
   audience_type: z.enum(['confirmed_rsvps', 'all_rsvps', 'partners', 'individual', 'custom_list']),
   // For audience_type === 'individual' or 'custom_list' the caller passes the rsvp/partner ids.
   audience_ids: z.array(z.string().uuid()).optional().default([]),
