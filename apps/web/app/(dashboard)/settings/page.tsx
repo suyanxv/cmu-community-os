@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { OrganizationProfile } from '@clerk/nextjs'
 import type { TemplateField } from '@/lib/ai'
 import { useToast } from '@/components/ui/Toast'
+import TeamSection from '@/components/TeamSection'
 
 export default function SettingsPage() {
   const toast = useToast()
@@ -167,7 +168,12 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Clerk org profile */}
+      {/* Team roles & titles (Quorum-level) */}
+      <div className={sectionClass}>
+        <TeamSection />
+      </div>
+
+      {/* Clerk org profile (invite, leave, etc.) */}
       <div className={sectionClass}>
         <h2 className="text-base font-semibold text-gray-900 mb-2">Organization & Members</h2>
         <OrganizationProfile routing="hash" />

@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS org_members (
   org_id          UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   role            TEXT NOT NULL DEFAULT 'editor',
+  title           TEXT,                            -- e.g. "Co-President", "Board Member"
   invited_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   joined_at       TIMESTAMPTZ,
   UNIQUE(org_id, user_id)
