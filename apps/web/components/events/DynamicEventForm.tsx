@@ -6,6 +6,9 @@ import type { TemplateField } from '@/lib/ai'
 
 interface DynamicEventFormProps {
   schema: TemplateField[]
+  eventId?: string
+  initialCore?: Partial<CoreValues>
+  initialCustom?: Record<string, unknown>
 }
 
 type CoreValues = {
@@ -44,7 +47,7 @@ const TIMEZONE_OPTIONS = [
   'Pacific/Honolulu',
 ]
 
-export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
+export default function DynamicEventForm({ schema, eventId, initialCore, initialCustom }: DynamicEventFormProps) {
   const router = useRouter()
   const [core, setCore] = useState<CoreValues>({
     name: '',
@@ -57,8 +60,9 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
     tone: 'professional-warm',
     channels: ['whatsapp', 'email'],
     rsvp_link: '',
+    ...initialCore,
   })
-  const [custom, setCustom] = useState<Record<string, unknown>>({})
+  const [custom, setCustom] = useState<Record<string, unknown>>(initialCustom ?? {})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -89,8 +93,8 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
       custom_fields: custom,
     }
 
-    const res = await fetch('/api/events', {
-      method: 'POST',
+    const res = await fetch(eventId ? `/api/events/${eventId}` : '/api/events', {
+      method: eventId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
@@ -108,7 +112,7 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
     }
 
     const data = await res.json()
-    router.push(`/events/${data.data.id}`)
+    router.push(`/events/${eventId ?? data.data.id}`)
   }
 
   const renderField = (field: TemplateField) => {
@@ -265,7 +269,7 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
           Cancel
         </button>
         <button type="submit" disabled={saving} className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
-          {saving ? 'Saving…' : 'Create Event'}
+          {saving ? 'Saving…' : eventId ? 'Save Changes' : 'Create Event'}
         </button>
       </div>
     </form>

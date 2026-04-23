@@ -30,6 +30,7 @@ const UpdateEventSchema = z.object({
   max_capacity: z.number().optional().nullable(),
   tags: z.array(z.string()).optional(),
   notes: z.string().optional().nullable(),
+  custom_fields: z.record(z.string(), z.any()).optional(),
 })
 
 type Params = { params: Promise<{ id: string }> }
@@ -92,6 +93,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         max_capacity     = CASE WHEN ${'max_capacity' in data} THEN ${data.max_capacity ?? null} ELSE max_capacity END,
         tags             = COALESCE(${data.tags ?? null}, tags),
         notes            = CASE WHEN ${'notes' in data} THEN ${data.notes ?? null} ELSE notes END,
+        event_mode       = COALESCE(${data.event_mode ?? null}, event_mode),
+        end_date         = CASE WHEN ${'end_date' in data} THEN ${data.end_date ?? null} ELSE end_date END,
+        custom_fields    = CASE WHEN ${'custom_fields' in data} THEN ${JSON.stringify(data.custom_fields ?? {})}::jsonb ELSE custom_fields END,
         updated_at       = NOW()
       WHERE id = ${id} AND org_id = ${ctx.orgId}
       RETURNING *

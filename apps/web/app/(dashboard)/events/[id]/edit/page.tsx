@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
 import EventForm from '@/components/events/EventForm'
+import DynamicEventForm from '@/components/events/DynamicEventForm'
+import type { TemplateField } from '@/lib/ai'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -12,13 +14,53 @@ export default async function EditEventPage({ params }: Params) {
   if (!clerkOrgId) notFound()
 
   const rows = await sql`
-    SELECT e.*
+    SELECT e.*, o.settings->'event_template_schema' AS template_schema
     FROM events e
     JOIN organizations o ON o.id = e.org_id
     WHERE e.id = ${id} AND o.clerk_org_id = ${clerkOrgId}
   `
   const event = rows[0]
   if (!event) notFound()
+
+  const templateSchema = event.template_schema as TemplateField[] | null
+  const hasTemplate = Array.isArray(templateSchema) && templateSchema.length > 0
+
+  const header = (
+    <>
+      <Link href={`/events/${id}`} className="text-sm text-gray-500 hover:text-gray-700 mb-2 block">
+        ← Back to Event
+      </Link>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Event</h1>
+    </>
+  )
+
+  if (hasTemplate) {
+    const initialCore = {
+      name: event.name ?? '',
+      event_date: event.event_date ? String(event.event_date).slice(0, 10) : '',
+      end_date: event.end_date ? String(event.end_date).slice(0, 10) : '',
+      start_time: event.start_time ? String(event.start_time).slice(0, 5) : '',
+      end_time: event.end_time ? String(event.end_time).slice(0, 5) : '',
+      timezone: event.timezone ?? 'America/Los_Angeles',
+      event_mode: (event.event_mode ?? 'in_person') as 'in_person' | 'virtual' | 'hybrid',
+      tone: event.tone ?? 'professional-warm',
+      channels: (event.channels ?? []) as string[],
+      rsvp_link: event.rsvp_link ?? '',
+    }
+    const initialCustom = (event.custom_fields ?? {}) as Record<string, unknown>
+
+    return (
+      <div className="p-4 sm:p-8 max-w-3xl mx-auto">
+        {header}
+        <DynamicEventForm
+          schema={templateSchema!}
+          eventId={id}
+          initialCore={initialCore}
+          initialCustom={initialCustom}
+        />
+      </div>
+    )
+  }
 
   const initialValues = {
     name: event.name ?? '',
@@ -48,10 +90,7 @@ export default async function EditEventPage({ params }: Params) {
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl mx-auto">
-      <Link href={`/events/${id}`} className="text-sm text-gray-500 hover:text-gray-700 mb-2 block">
-        ← Back to Event
-      </Link>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Event</h1>
+      {header}
       <EventForm initialValues={initialValues} eventId={id} />
     </div>
   )
