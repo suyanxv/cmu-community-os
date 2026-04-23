@@ -86,6 +86,21 @@ export default function EventsList({ events }: { events: EventRow[] }) {
     setSelectedIds(new Set())
   }
 
+  const quickPublish = async (id: string, name: string) => {
+    const res = await fetch(`/api/events/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'published' }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to publish')
+      return
+    }
+    toast.success(`"${name}" published`)
+    router.refresh()
+  }
+
   const deleteSelected = async () => {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
@@ -258,8 +273,8 @@ export default function EventsList({ events }: { events: EventRow[] }) {
         </div>
       ) : tab === 'all' ? (
         <div className="space-y-6">
-          {upcoming.length > 0 && <EventSection title="Upcoming" events={upcoming} selectMode={selectMode} selectedIds={selectedIds} onToggle={toggleSelected} />}
-          {past.length > 0 && <EventSection title="Past" events={past} dim selectMode={selectMode} selectedIds={selectedIds} onToggle={toggleSelected} />}
+          {upcoming.length > 0 && <EventSection title="Upcoming" events={upcoming} selectMode={selectMode} selectedIds={selectedIds} onToggle={toggleSelected} onPublish={quickPublish} />}
+          {past.length > 0 && <EventSection title="Past" events={past} dim selectMode={selectMode} selectedIds={selectedIds} onToggle={toggleSelected} onPublish={quickPublish} />}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -271,6 +286,7 @@ export default function EventsList({ events }: { events: EventRow[] }) {
               selectMode={selectMode}
               selected={selectedIds.has(event.id)}
               onToggle={toggleSelected}
+              onPublish={quickPublish}
             />
           ))}
         </div>
@@ -286,9 +302,10 @@ interface SectionProps {
   selectMode: boolean
   selectedIds: Set<string>
   onToggle: (id: string) => void
+  onPublish: (id: string, name: string) => void
 }
 
-function EventSection({ title, events, dim = false, selectMode, selectedIds, onToggle }: SectionProps) {
+function EventSection({ title, events, dim = false, selectMode, selectedIds, onToggle, onPublish }: SectionProps) {
   return (
     <section>
       <h2 className="text-xs uppercase tracking-wide font-semibold text-gray-500 mb-2">
@@ -303,6 +320,7 @@ function EventSection({ title, events, dim = false, selectMode, selectedIds, onT
             selectMode={selectMode}
             selected={selectedIds.has(event.id)}
             onToggle={onToggle}
+            onPublish={onPublish}
           />
         ))}
       </div>
@@ -316,9 +334,10 @@ interface CardProps {
   selectMode: boolean
   selected: boolean
   onToggle: (id: string) => void
+  onPublish: (id: string, name: string) => void
 }
 
-function EventRowCard({ event, dim, selectMode, selected, onToggle }: CardProps) {
+function EventRowCard({ event, dim, selectMode, selected, onToggle, onPublish }: CardProps) {
   const statusStyle =
     event.status === 'published' ? 'bg-green-100 text-green-700'
     : event.status === 'draft'   ? 'bg-butter-100 text-butter-700'
@@ -368,6 +387,16 @@ function EventRowCard({ event, dim, selectMode, selected, onToggle }: CardProps)
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${statusStyle}`}>
               {event.status}
             </span>
+            {event.status === 'draft' && !selectMode && (
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPublish(event.id, event.name) }}
+                className="text-[11px] bg-sage-600 text-white px-2 py-0.5 rounded-full font-medium hover:bg-sage-700"
+                title="Publish this event"
+              >
+                ✓ Publish
+              </button>
+            )}
           </div>
           <p className="flex items-center gap-1.5 text-sm text-gray-500">
             <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" strokeWidth={1.75} />
