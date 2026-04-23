@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
 import BroadcastsSection from '@/components/events/BroadcastsSection'
+import CancelEventButton from '@/components/events/CancelEventButton'
 import CheckInCard from '@/components/events/CheckInCard'
 import DeleteEventButton from '@/components/events/DeleteEventButton'
 import DuplicateEventButton from '@/components/events/DuplicateEventButton'
@@ -103,7 +104,15 @@ export default async function EventDetailPage({ params }: Params) {
         <GenerateRemindersButton eventId={id} />
         <DuplicateEventButton eventId={id} />
         <ShareEventButton eventId={id} />
-        <DeleteEventButton eventId={id} eventName={event.name} />
+        {/* Draft → Delete (never published, nothing lost).
+            Published / Past → Cancel (preserve audit trail).
+            Cancelled → Delete (already communicated; admin can now purge).
+            Archived → no destructive action surfaced here. */}
+        {event.status === 'draft' || event.status === 'cancelled' ? (
+          <DeleteEventButton eventId={id} eventName={event.name} status={event.status as string} />
+        ) : event.status === 'published' || event.status === 'past' ? (
+          <CancelEventButton eventId={id} eventName={event.name} />
+        ) : null}
       </div>
 
       {/* Quick stats */}

@@ -20,6 +20,19 @@ const STATUS_STYLE: Record<Status, string> = {
   cancelled: 'bg-red-100 text-red-700 line-through',
 }
 
+// Which status transitions make sense from each state. Skipping invalid
+// options keeps users from accidental nonsense like "cancel a draft"
+// (nothing to cancel — just delete it) or going from past back to draft.
+function availableTransitions(current: Status): Status[] {
+  switch (current) {
+    case 'draft':     return ['draft', 'published']
+    case 'published': return ['published', 'draft', 'past', 'cancelled']
+    case 'past':      return ['past', 'published', 'cancelled']
+    case 'cancelled': return ['cancelled', 'published']
+    default:          return ['draft', 'published', 'past', 'cancelled']
+  }
+}
+
 export default function EventStatusControl({ eventId, initialStatus }: { eventId: string; initialStatus: string }) {
   const router = useRouter()
   const toast = useToast()
@@ -82,7 +95,7 @@ export default function EventStatusControl({ eventId, initialStatus }: { eventId
       </button>
       {open && (
         <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-          {(['draft', 'published', 'past', 'cancelled'] as Status[]).map((s) => (
+          {availableTransitions(status).map((s) => (
             <button
               key={s}
               onClick={() => update(s)}
