@@ -1,0 +1,98 @@
+'use client'
+
+import { useState } from 'react'
+
+interface ContentCardProps {
+  contentId: string
+  eventId: string
+  channel: string
+  subjectLine: string | null
+  body: string
+  characterCount: number | null
+  version: number
+  onRegenerate: (channel: string) => Promise<void>
+}
+
+const CHANNEL_LABELS: Record<string, { label: string; icon: string; limit: number | null }> = {
+  whatsapp:  { label: 'WhatsApp',  icon: '💬', limit: 1024 },
+  email:     { label: 'Email',     icon: '📧', limit: null },
+  instagram: { label: 'Instagram', icon: '📸', limit: 2200 },
+  linkedin:  { label: 'LinkedIn',  icon: '💼', limit: 3000 },
+  luma:      { label: 'Luma',      icon: '🗓️', limit: 500 },
+}
+
+export default function ContentCard({ contentId, eventId, channel, subjectLine, body, characterCount, version, onRegenerate }: ContentCardProps) {
+  const [copied, setCopied] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+
+  const info = CHANNEL_LABELS[channel] ?? { label: channel, icon: '📄', limit: null }
+
+  const copyText = subjectLine ? `Subject: ${subjectLine}\n\n${body}` : body
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(copyText)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+
+    // Track copy
+    await fetch(`/api/events/${eventId}/content`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contentId }),
+    }).catch(() => {})
+  }
+
+  const handleRegenerate = async () => {
+    setRegenerating(true)
+    await onRegenerate(channel)
+    setRegenerating(false)
+  }
+
+  const isOverLimit = info.limit && characterCount && characterCount > info.limit
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
+        <div className="flex items-center gap-2">
+          <span>{info.icon}</span>
+          <span className="font-medium text-gray-900 text-sm">{info.label}</span>
+          <span className="text-xs text-gray-400">v{version}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {characterCount !== null && (
+            <span className={`text-xs ${isOverLimit ? 'text-red-500' : 'text-gray-400'}`}>
+              {characterCount.toLocaleString()}{info.limit ? `/${info.limit}` : ''} chars
+            </span>
+          )}
+          <button
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-50"
+          >
+            {regenerating ? '⟳ Regenerating…' : '↻ Regenerate'}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={`text-xs px-3 py-1 rounded font-medium transition-colors ${
+              copied
+                ? 'bg-green-100 text-green-700'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }`}
+          >
+            {copied ? '✓ Copied!' : 'Copy'}
+          </button>
+        </div>
+      </div>
+
+      <div className="p-5">
+        {subjectLine && (
+          <div className="mb-3 pb-3 border-b border-gray-100">
+            <p className="text-xs text-gray-400 mb-1">Subject Line</p>
+            <p className="text-sm font-medium text-gray-900">{subjectLine}</p>
+          </div>
+        )}
+        <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{body}</pre>
+      </div>
+    </div>
+  )
+}

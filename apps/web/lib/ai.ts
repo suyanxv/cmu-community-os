@@ -1,0 +1,275 @@
+import Anthropic from '@anthropic-ai/sdk'
+
+let _anthropic: Anthropic | undefined
+
+function getAnthropic() {
+  if (!_anthropic) {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not set')
+    }
+    _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return _anthropic
+}
+
+export const anthropic = new Proxy({} as Anthropic, {
+  get(_target, prop) {
+    return Reflect.get(getAnthropic(), prop)
+  },
+})
+
+export type Channel = 'whatsapp' | 'email' | 'instagram' | 'linkedin' | 'luma'
+
+const CHANNEL_INSTRUCTIONS: Record<Channel, string> = {
+  whatsapp: `Generate a WhatsApp announcement message for this event.
+Requirements:
+- Maximum 1,024 characters
+- No markdown formatting (no **, no ##, no -)
+- Use line breaks between sections
+- Emojis are encouraged to add warmth
+- End with the RSVP link if provided
+- Casual, warm, community tone
+- Include: event name, date/time, location, key highlights, RSVP CTA`,
+
+  email: `Generate an announcement email for this event.
+Requirements:
+- Return ONLY a JSON object: {"subject": "...", "body": "..."}
+- Subject line: compelling, under 60 characters
+- Body: professional but warm tone, full HTML-safe formatting using plain text
+- Include: event name, date/time, location, agenda highlights, speaker names, RSVP deadline
+- End with a clear RSVP call-to-action
+- Signature: "Best, [Organization Name] Team"`,
+
+  instagram: `Generate an Instagram caption for this event.
+Requirements:
+- Maximum 2,200 characters
+- Hook in the FIRST line (most important — users see this before "more")
+- Engaging, visual language — describe the experience
+- 3-5 relevant hashtags at the very end (on their own line)
+- Include: event name, date, location, RSVP link
+- Community-forward, aspirational tone`,
+
+  linkedin: `Generate a LinkedIn post announcing this event.
+Requirements:
+- Maximum 3,000 characters (aim for 800-1,200 for best engagement)
+- Professional yet approachable tone
+- Lead with a compelling hook or question
+- Paragraph format (not bullet lists)
+- Minimal hashtags: 2-3 max, at the end
+- Include: event name, date, speakers/VIPs, what attendees will gain
+- End with RSVP link and brief CTA`,
+
+  luma: `Generate an event description for a Luma event listing.
+Requirements:
+- Maximum 500 characters
+- Factual, clear, SEO-friendly
+- No fluff — who, what, when, where, why
+- End with RSVP info or "Space is limited"
+- No emojis`,
+}
+
+export interface EventContext {
+  name: string
+  event_date: string
+  start_time: string
+  end_time?: string | null
+  timezone: string
+  location_name?: string | null
+  location_address?: string | null
+  location_url?: string | null
+  is_virtual: boolean
+  description?: string | null
+  speakers?: Array<{ name: string; title?: string; bio?: string }> | null
+  agenda?: string | null
+  sponsors?: Array<{ name: string; tier?: string }> | null
+  tone: string
+  target_audience?: string | null
+  rsvp_link?: string | null
+  rsvp_deadline?: string | null
+  max_capacity?: number | null
+  org_name: string
+}
+
+function buildEventContextXml(event: EventContext): string {
+  const speakers = event.speakers?.length
+    ? event.speakers.map((s) => `${s.name}${s.title ? ` (${s.title})` : ''}`).join(', ')
+    : 'None listed'
+
+  const sponsors = event.sponsors?.length
+    ? event.sponsors.map((s) => `${s.name}${s.tier ? ` [${s.tier}]` : ''}`).join(', ')
+    : 'None'
+
+  return `<event_context>
+Organization: ${event.org_name}
+Event Name: ${event.name}
+Date: ${event.event_date}
+Time: ${event.start_time}${event.end_time ? ` – ${event.end_time}` : ''} ${event.timezone}
+Location: ${event.is_virtual ? 'Virtual' : [event.location_name, event.location_address].filter(Boolean).join(', ') || 'TBD'}
+Location URL: ${event.location_url || 'N/A'}
+Virtual: ${event.is_virtual ? 'Yes' : 'No'}
+Description: ${event.description || 'N/A'}
+Speakers / Guests: ${speakers}
+Agenda: ${event.agenda || 'N/A'}
+Sponsors: ${sponsors}
+Tone: ${event.tone}
+Target Audience: ${event.target_audience || 'General community members'}
+RSVP Link: ${event.rsvp_link || 'N/A'}
+RSVP Deadline: ${event.rsvp_deadline || 'N/A'}
+Max Capacity: ${event.max_capacity || 'Open'}
+</event_context>`
+}
+
+const SYSTEM_PROMPT_PREFIX = `You are an expert content writer for volunteer-led community organizations — alumni networks, professional associations, and clubs. Your writing is warm, specific, and human. You never use generic filler phrases like "Don't miss out!" or "Join us for an exciting event." Every piece of content you write sounds like it was crafted by a real person who cares deeply about their community.`
+
+export interface GeneratedChannel {
+  channel: Channel
+  subject_line: string | null
+  body: string
+  character_count: number
+  prompt_tokens: number
+  output_tokens: number
+  cached: boolean
+}
+
+export async function generateChannelContent(
+  event: EventContext,
+  channels: Channel[]
+): Promise<GeneratedChannel[]> {
+  const eventXml = buildEventContextXml(event)
+  const systemContent = `${SYSTEM_PROMPT_PREFIX}\n\n${eventXml}`
+
+  const results: GeneratedChannel[] = []
+
+  for (const channel of channels) {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: [
+        {
+          type: 'text',
+          text: systemContent,
+          // Prompt caching: event context is identical across all channel calls
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [
+        {
+          role: 'user',
+          content: CHANNEL_INSTRUCTIONS[channel],
+        },
+      ],
+    })
+
+    const rawText = message.content[0].type === 'text' ? message.content[0].text : ''
+    const usage = message.usage as {
+      input_tokens: number
+      output_tokens: number
+      cache_read_input_tokens?: number
+      cache_creation_input_tokens?: number
+    }
+
+    let subjectLine: string | null = null
+    let body = rawText
+
+    if (channel === 'email') {
+      try {
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0])
+          subjectLine = parsed.subject ?? null
+          body = parsed.body ?? rawText
+        }
+      } catch {
+        // fallback: use raw text as body
+      }
+    }
+
+    results.push({
+      channel,
+      subject_line: subjectLine,
+      body,
+      character_count: body.length,
+      prompt_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      cached: (usage.cache_read_input_tokens ?? 0) > 0,
+    })
+  }
+
+  return results
+}
+
+export async function generateReminderSchedule(
+  eventName: string,
+  eventDate: string,
+  channels: string[]
+): Promise<Array<{ title: string; description: string; due_date: string; priority: 'high' | 'medium' | 'low' }>> {
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: `Generate a reminder schedule for this community event.
+
+Event: ${eventName}
+Event Date: ${eventDate}
+Channels being used: ${channels.join(', ')}
+
+Return a JSON array of reminder objects. Each object must have:
+- title: string (short task name)
+- description: string (what to do specifically)
+- due_date: string (ISO date, YYYY-MM-DD, relative to event date)
+- priority: "high" | "medium" | "low"
+
+Include reminders for: content creation, sending announcements, RSVP reminders, day-of prep, post-event follow-up.
+Typical schedule: 3 weeks before (announce), 1 week before (reminder), 3 days before (final push), day before (logistics check), day after (recap/thank you).
+Return ONLY the JSON array, no other text.`,
+      },
+    ],
+  })
+
+  const rawText = message.content[0].type === 'text' ? message.content[0].text : '[]'
+  try {
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/)
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : []
+  } catch {
+    return []
+  }
+}
+
+export async function generatePartnerEmailDraft(params: {
+  orgName: string
+  partnerCompany: string
+  partnerContact?: string | null
+  eventName?: string | null
+  purpose: string
+  tone?: string
+}): Promise<{ subject: string; body: string }> {
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 512,
+    messages: [
+      {
+        role: 'user',
+        content: `Write a professional email draft for a community organization reaching out to a sponsor/partner.
+
+From: ${params.orgName}
+To: ${params.partnerCompany}${params.partnerContact ? ` (${params.partnerContact})` : ''}
+${params.eventName ? `Event: ${params.eventName}` : ''}
+Purpose: ${params.purpose}
+Tone: ${params.tone || 'professional and warm'}
+
+Return ONLY a JSON object: {"subject": "...", "body": "..."}
+The body should be 3-4 paragraphs. Sign off as "${params.orgName} Team".`,
+      },
+    ],
+  })
+
+  const rawText = message.content[0].type === 'text' ? message.content[0].text : '{}'
+  try {
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : { subject: '', body: rawText }
+  } catch {
+    return { subject: '', body: rawText }
+  }
+}
