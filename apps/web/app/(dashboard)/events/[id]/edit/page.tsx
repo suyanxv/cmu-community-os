@@ -19,16 +19,23 @@ export default async function EditEventPage({ params }: Params) {
   if (!clerkOrgId) notFound()
 
   const rows = await sql`
-    SELECT e.*, o.settings->'event_template_schema' AS template_schema,
-      COALESCE(ARRAY_AGG(eh.user_id) FILTER (WHERE eh.user_id IS NOT NULL), '{}') AS host_user_ids
+    SELECT e.*, o.settings->'event_template_schema' AS template_schema
     FROM events e
     JOIN organizations o ON o.id = e.org_id
-    LEFT JOIN event_hosts eh ON eh.event_id = e.id AND eh.org_id = e.org_id
     WHERE e.id = ${id} AND o.clerk_org_id = ${clerkOrgId}
-    GROUP BY e.id, o.id
   `
   const event = rows[0]
   if (!event) notFound()
+
+  let hostUserIds: string[] = []
+  try {
+    const hostRows = await sql`
+      SELECT user_id FROM event_hosts WHERE event_id = ${id}
+    `
+    hostUserIds = hostRows.map((r) => r.user_id as string)
+  } catch {
+    hostUserIds = []
+  }
 
   const templateSchema = event.template_schema as TemplateField[] | null
   const customFields = Array.isArray(templateSchema) && templateSchema.length > 0 ? templateSchema : undefined
@@ -62,7 +69,7 @@ export default async function EditEventPage({ params }: Params) {
     checkin_whatsapp_url: (event.checkin_config as Record<string, unknown> | null)?.whatsapp_url as string ?? '',
     checkin_welcome_message: (event.checkin_config as Record<string, unknown> | null)?.welcome_message as string ?? '',
     checkin_fields: ((event.checkin_config as { fields?: TemplateField[] } | null)?.fields as TemplateField[] | undefined) ?? DEFAULT_CHECKIN_FIELDS,
-    host_user_ids: (event.host_user_ids as string[] | null) ?? [],
+    host_user_ids: hostUserIds,
   }
 
   return (

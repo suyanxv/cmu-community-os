@@ -37,25 +37,29 @@ export async function POST(req: NextRequest, { params }: Params) {
       return Response.json({ error: 'Generation limit reached (10/hour). Try again later.' }, { status: 429 })
     }
 
-    // Fetch event + org name + hosts
+    // Fetch event + org name
     const eventRows = await sql`
-      SELECT e.*, o.name AS org_name,
-        COALESCE((
-          SELECT json_agg(json_build_object(
-            'name',  COALESCE(u.full_name, u.email),
-            'title', om.title
-          ))
-          FROM event_hosts eh
-          JOIN users u       ON u.id = eh.user_id
-          LEFT JOIN org_members om ON om.user_id = u.id AND om.org_id = e.org_id
-          WHERE eh.event_id = e.id
-        ), '[]'::json) AS hosts
+      SELECT e.*, o.name AS org_name
       FROM events e
       JOIN organizations o ON o.id = e.org_id
       WHERE e.id = ${eventId} AND e.org_id = ${ctx.orgId}
     `
     if (!eventRows[0]) throw new ApiError(404, 'Event not found')
     const event = eventRows[0]
+
+    // Fetch hosts separately (fault-tolerant)
+    try {
+      const hostRows = await sql`
+        SELECT COALESCE(u.full_name, u.email) AS name, om.title
+        FROM event_hosts eh
+        JOIN users u ON u.id = eh.user_id
+        LEFT JOIN org_members om ON om.user_id = u.id AND om.org_id = ${ctx.orgId}
+        WHERE eh.event_id = ${eventId} AND eh.org_id = ${ctx.orgId}
+      `
+      event.hosts = hostRows
+    } catch {
+      event.hosts = []
+    }
 
     const body = await req.json()
     const { channels } = GenerateSchema.parse(body)

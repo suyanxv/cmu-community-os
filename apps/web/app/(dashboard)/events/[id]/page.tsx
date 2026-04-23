@@ -32,26 +32,30 @@ export default async function EventDetailPage({ params }: Params) {
       (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id AND r.status = 'confirmed')::int AS rsvp_count,
       (SELECT COALESCE(SUM(guest_count), 0) FROM rsvps r WHERE r.event_id = e.id AND r.status = 'confirmed')::int AS total_guests,
       (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id AND r.check_in_at IS NOT NULL)::int AS checked_in_count,
-      o.settings->'event_template_schema' AS template_schema,
-      COALESCE((
-        SELECT json_agg(json_build_object(
-          'user_id',    u.id,
-          'full_name',  u.full_name,
-          'email',      u.email,
-          'avatar_url', u.avatar_url,
-          'title',      om.title
-        ) ORDER BY u.full_name)
-        FROM event_hosts eh
-        JOIN users u       ON u.id = eh.user_id
-        LEFT JOIN org_members om ON om.user_id = u.id AND om.org_id = e.org_id
-        WHERE eh.event_id = e.id
-      ), '[]'::json) AS hosts
+      o.settings->'event_template_schema' AS template_schema
     FROM events e
     JOIN organizations o ON o.id = e.org_id
     WHERE e.id = ${id} AND e.org_id = ${orgId}
   `
   if (!events[0]) notFound()
   const event = events[0]
+
+  // Fetch hosts in a separate, fault-tolerant query so a missing
+  // event_hosts table (pre-migration) doesn't break the whole page.
+  let hosts: Array<Record<string, unknown>> = []
+  try {
+    hosts = await sql`
+      SELECT u.id AS user_id, u.full_name, u.email, u.avatar_url, om.title
+      FROM event_hosts eh
+      JOIN users u ON u.id = eh.user_id
+      LEFT JOIN org_members om ON om.user_id = u.id AND om.org_id = ${orgId}
+      WHERE eh.event_id = ${id} AND eh.org_id = ${orgId}
+      ORDER BY u.full_name
+    `
+  } catch {
+    hosts = []
+  }
+  event.hosts = hosts
 
   const content = await sql`
     SELECT DISTINCT ON (channel) channel, subject_line, body, character_count, created_at
