@@ -5,6 +5,7 @@ import { sql } from '@/lib/db'
 import DeleteEventButton from '@/components/events/DeleteEventButton'
 import DuplicateEventButton from '@/components/events/DuplicateEventButton'
 import EventPartnersSection from '@/components/events/EventPartnersSection'
+import EventStatusControl from '@/components/events/EventStatusControl'
 import GenerateRemindersButton from '@/components/reminders/GenerateRemindersButton'
 import ShareEventButton from '@/components/events/ShareEventButton'
 
@@ -52,7 +53,10 @@ export default async function EventDetailPage({ params }: Params) {
           <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700 mb-2 block">
             ← Back to Events
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
+            <EventStatusControl eventId={id} initialStatus={event.status} />
+          </div>
           <p className="text-gray-500 mt-1">
             {new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             {event.start_time && ` · ${event.start_time}`}
