@@ -61,6 +61,12 @@ export default function RsvpPage() {
     await fetchRsvps()
   }
 
+  const deleteRsvp = async (id: string, name: string) => {
+    if (!confirm(`Remove ${name} from the RSVP list?`)) return
+    await fetch(`/api/events/${eventId}/rsvps/${id}`, { method: 'DELETE' })
+    await fetchRsvps()
+  }
+
   const exportCsv = () => {
     window.location.href = `/api/events/${eventId}/rsvps/export`
   }
@@ -146,11 +152,12 @@ export default function RsvpPage() {
                 <th className="text-center px-4 py-3 font-medium text-gray-600">Guests</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-600">Status</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
+                <th className="w-10 px-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {rsvps.map((r) => (
-                <tr key={r.id} className="hover:bg-stone-50">
+                <tr key={r.id} className="hover:bg-stone-50 group">
                   <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
                   <td className="px-4 py-3 text-gray-500">{r.email ?? '-'}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{r.guest_count}</td>
@@ -170,6 +177,18 @@ export default function RsvpPage() {
                     </select>
                   </td>
                   <td className="px-4 py-3 text-gray-400">{new Date(r.created_at).toLocaleDateString()}</td>
+                  <td className="px-2 text-right">
+                    <button
+                      onClick={() => deleteRsvp(r.id, r.name)}
+                      className="text-gray-300 hover:text-red-600 p-1.5 rounded transition-colors"
+                      title="Remove RSVP"
+                      aria-label={`Delete RSVP for ${r.name}`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+                      </svg>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
