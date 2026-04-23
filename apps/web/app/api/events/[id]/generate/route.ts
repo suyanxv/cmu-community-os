@@ -37,9 +37,19 @@ export async function POST(req: NextRequest, { params }: Params) {
       return Response.json({ error: 'Generation limit reached (10/hour). Try again later.' }, { status: 429 })
     }
 
-    // Fetch event + org name
+    // Fetch event + org name + hosts
     const eventRows = await sql`
-      SELECT e.*, o.name AS org_name
+      SELECT e.*, o.name AS org_name,
+        COALESCE((
+          SELECT json_agg(json_build_object(
+            'name',  COALESCE(u.full_name, u.email),
+            'title', om.title
+          ))
+          FROM event_hosts eh
+          JOIN users u       ON u.id = eh.user_id
+          LEFT JOIN org_members om ON om.user_id = u.id AND om.org_id = e.org_id
+          WHERE eh.event_id = e.id
+        ), '[]'::json) AS hosts
       FROM events e
       JOIN organizations o ON o.id = e.org_id
       WHERE e.id = ${eventId} AND e.org_id = ${ctx.orgId}
@@ -65,6 +75,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         event_mode: event.event_mode,
         description: event.description,
         speakers: event.speakers,
+        hosts: event.hosts,
         agenda: event.agenda,
         sponsors: event.sponsors,
         tone: event.tone,

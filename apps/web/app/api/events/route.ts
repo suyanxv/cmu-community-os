@@ -31,6 +31,7 @@ const CreateEventSchema = z.object({
   notes: z.string().optional().nullable(),
   custom_fields: z.record(z.string(), z.any()).optional().default({}),
   checkin_config: z.record(z.string(), z.any()).optional().default({}),
+  host_user_ids: z.array(z.string().uuid()).optional().default([]),
 })
 
 export async function GET(req: NextRequest) {
@@ -100,7 +101,22 @@ export async function POST(req: NextRequest) {
       RETURNING *
     `
 
-    logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: rows[0].id, action: 'created', detail: { name: data.name } })
+    // Link hosts (only those that are actually members of this org)
+    const eventId = rows[0].id as string
+    if (data.host_user_ids && data.host_user_ids.length > 0) {
+      for (const uid of data.host_user_ids) {
+        await sql`
+          INSERT INTO event_hosts (org_id, event_id, user_id)
+          SELECT ${ctx.orgId}, ${eventId}, ${uid}
+          WHERE EXISTS (
+            SELECT 1 FROM org_members WHERE org_id = ${ctx.orgId} AND user_id = ${uid}
+          )
+          ON CONFLICT (event_id, user_id) DO NOTHING
+        `
+      }
+    }
+
+    logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: eventId, action: 'created', detail: { name: data.name } })
 
     return Response.json({ data: rows[0] }, { status: 201 })
   } catch (err) {

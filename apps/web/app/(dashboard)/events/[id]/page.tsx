@@ -32,7 +32,20 @@ export default async function EventDetailPage({ params }: Params) {
       (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id AND r.status = 'confirmed')::int AS rsvp_count,
       (SELECT COALESCE(SUM(guest_count), 0) FROM rsvps r WHERE r.event_id = e.id AND r.status = 'confirmed')::int AS total_guests,
       (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id AND r.check_in_at IS NOT NULL)::int AS checked_in_count,
-      o.settings->'event_template_schema' AS template_schema
+      o.settings->'event_template_schema' AS template_schema,
+      COALESCE((
+        SELECT json_agg(json_build_object(
+          'user_id',    u.id,
+          'full_name',  u.full_name,
+          'email',      u.email,
+          'avatar_url', u.avatar_url,
+          'title',      om.title
+        ) ORDER BY u.full_name)
+        FROM event_hosts eh
+        JOIN users u       ON u.id = eh.user_id
+        LEFT JOIN org_members om ON om.user_id = u.id AND om.org_id = e.org_id
+        WHERE eh.event_id = e.id
+      ), '[]'::json) AS hosts
     FROM events e
     JOIN organizations o ON o.id = e.org_id
     WHERE e.id = ${id} AND e.org_id = ${orgId}
@@ -119,6 +132,7 @@ export default async function EventDetailPage({ params }: Params) {
 
 interface SpeakerEntry { name?: string; title?: string; bio?: string }
 interface SponsorEntry { name?: string; tier?: string }
+interface HostEntry { user_id: string; full_name: string | null; email: string; avatar_url: string | null; title: string | null }
 
 function CapacityStats({
   rsvpCount,
@@ -187,6 +201,7 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
   const modeLabel = event.event_mode === 'virtual' ? 'Virtual' : event.event_mode === 'hybrid' ? 'Hybrid' : 'In-Person'
   const speakers = (event.speakers ?? []) as SpeakerEntry[]
   const sponsors = (event.sponsors ?? []) as SponsorEntry[]
+  const hosts = (event.hosts ?? []) as HostEntry[]
   const customFields = (event.custom_fields ?? {}) as Record<string, unknown>
   const templateSchema = (event.template_schema ?? null) as Array<{ id: string; label: string }> | null
 
@@ -204,6 +219,29 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
     <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
       <h2 className="text-base font-semibold text-gray-900 mb-2">Event Info</h2>
       <dl>
+        {hosts.length > 0 && (
+          <DetailRow label="Hosted By">
+            <div className="flex flex-wrap gap-2">
+              {hosts.map((h) => {
+                const name = h.full_name ?? h.email
+                return (
+                  <span key={h.user_id} className="inline-flex items-center gap-2 px-2 py-1 bg-sage-50 border border-sage-200 rounded-full text-xs">
+                    {h.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={h.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : (
+                      <span className="h-5 w-5 rounded-full bg-sage-200 text-sage-800 flex items-center justify-center text-[10px] font-medium">
+                        {(name[0] ?? '?').toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-sage-800 font-medium">{name}</span>
+                    {h.title && <span className="text-sage-600">· {h.title}</span>}
+                  </span>
+                )
+              })}
+            </div>
+          </DetailRow>
+        )}
         <DetailRow label="Event Mode">{modeLabel}</DetailRow>
 
         {event.end_date && String(event.end_date).slice(0, 10) !== String(event.event_date).slice(0, 10) ? (

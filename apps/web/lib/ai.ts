@@ -82,6 +82,7 @@ export interface EventContext {
   event_mode?: 'in_person' | 'virtual' | 'hybrid'
   description?: string | null
   speakers?: Array<{ name: string; title?: string; bio?: string }> | null
+  hosts?: Array<{ name: string; title?: string | null }> | null
   agenda?: string | null
   sponsors?: Array<{ name: string; tier?: string }> | null
   tone: string
@@ -101,6 +102,10 @@ function buildEventContextXml(event: EventContext): string {
   const sponsors = event.sponsors?.length
     ? event.sponsors.map((s) => `${s.name}${s.tier ? ` [${s.tier}]` : ''}`).join(', ')
     : 'None'
+
+  const hosts = event.hosts?.length
+    ? event.hosts.map((h) => `${h.name}${h.title ? ` (${h.title})` : ''}`).join(', ')
+    : null
 
   const customLines = event.custom_fields && Object.keys(event.custom_fields).length > 0
     ? '\n' + Object.entries(event.custom_fields)
@@ -122,6 +127,7 @@ Time: ${event.start_time}${event.end_time ? ` – ${event.end_time}` : ''} ${eve
 Location: ${event.event_mode === 'virtual' ? 'Virtual' : [event.location_name, event.location_address].filter(Boolean).join(', ') || 'TBD'}
 Location URL: ${event.location_url || 'N/A'}
 Event Mode: ${modeLabel}
+${hosts ? `Hosted By: ${hosts}` : ''}
 Description: ${event.description || 'N/A'}
 Speakers / Guests: ${speakers}
 Agenda: ${event.agenda || 'N/A'}

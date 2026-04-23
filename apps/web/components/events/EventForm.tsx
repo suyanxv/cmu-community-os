@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import type { TemplateField } from '@/lib/ai'
 import CheckInFieldsEditor from '@/components/events/CheckInFieldsEditor'
+import HostsSelector from '@/components/events/HostsSelector'
 
 type Speaker = { name: string; title: string; bio: string }
 type Sponsor = { name: string; tier: string }
@@ -36,6 +37,7 @@ interface EventFormData {
   checkin_whatsapp_url: string
   checkin_welcome_message: string
   checkin_fields: TemplateField[]
+  host_user_ids: string[]
 }
 
 const CHANNEL_OPTIONS = [
@@ -92,6 +94,7 @@ const defaultValues: EventFormData = {
     { id: 'school',          label: 'School / Program',           type: 'text', required: false, placeholder: 'Tepper, SCS, Heinz, …' },
     { id: 'how_heard',       label: 'How did you hear about us?', type: 'text', required: false, placeholder: 'WhatsApp, friend, email…' },
   ],
+  host_user_ids: [],
 }
 
 interface EventFormProps {
@@ -291,6 +294,20 @@ export default function EventForm({ initialValues, eventId, customFields, initia
           </label>
           <input type="url" value={form.location_url} onChange={(e) => set('location_url', e.target.value)} placeholder="https://" className={inputClass} />
         </div>
+      </div>
+
+      {/* Hosts */}
+      <div className={sectionClass}>
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Hosts</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Team members running or representing this event (shown as &ldquo;hosted by&rdquo;). Select any number.
+          </p>
+        </div>
+        <HostsSelector
+          selectedIds={form.host_user_ids}
+          onChange={(ids) => set('host_user_ids', ids)}
+        />
       </div>
 
       {/* Content */}

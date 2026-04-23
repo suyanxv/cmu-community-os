@@ -32,6 +32,7 @@ const UpdateEventSchema = z.object({
   notes: z.string().optional().nullable(),
   custom_fields: z.record(z.string(), z.any()).optional(),
   checkin_config: z.record(z.string(), z.any()).optional(),
+  host_user_ids: z.array(z.string().uuid()).optional(),
 })
 
 type Params = { params: Promise<{ id: string }> }
@@ -107,6 +108,28 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       WHERE id = ${id} AND org_id = ${ctx.orgId}
       RETURNING *
     `
+
+    // Sync hosts if the caller explicitly sent host_user_ids
+    if ('host_user_ids' in data && data.host_user_ids !== undefined) {
+      const nextIds = data.host_user_ids
+      // Remove any host not in the new set
+      await sql`
+        DELETE FROM event_hosts
+        WHERE event_id = ${id} AND org_id = ${ctx.orgId}
+          AND user_id != ALL(${nextIds}::uuid[])
+      `
+      // Insert new hosts (verify each is an actual org member)
+      for (const uid of nextIds) {
+        await sql`
+          INSERT INTO event_hosts (org_id, event_id, user_id)
+          SELECT ${ctx.orgId}, ${id}, ${uid}
+          WHERE EXISTS (
+            SELECT 1 FROM org_members WHERE org_id = ${ctx.orgId} AND user_id = ${uid}
+          )
+          ON CONFLICT (event_id, user_id) DO NOTHING
+        `
+      }
+    }
 
     logActivity({ orgId: ctx.orgId, userId: ctx.userId, entityType: 'event', entityId: id, action: 'updated' })
     return Response.json({ data: rows[0] })

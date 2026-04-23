@@ -35,6 +35,16 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
     if (!rows[0]) throw new ApiError(404, 'Event not found')
 
+    // Copy hosts from the source event
+    const newId = rows[0].id as string
+    await sql`
+      INSERT INTO event_hosts (org_id, event_id, user_id)
+      SELECT ${ctx.orgId}, ${newId}, user_id
+      FROM event_hosts
+      WHERE event_id = ${sourceId} AND org_id = ${ctx.orgId}
+      ON CONFLICT (event_id, user_id) DO NOTHING
+    `
+
     logActivity({
       orgId: ctx.orgId,
       userId: ctx.userId,
