@@ -42,13 +42,29 @@ export default async function EditEventPage({ params }: Params) {
 
   const initialCustomValues = (event.custom_fields ?? {}) as Record<string, unknown>
 
+  // Normalize DATE columns to YYYY-MM-DD. Neon returns date columns as JS Date
+  // objects (whose default String() is "Fri Apr 24 2026 ..."), so plain slice
+  // can't be trusted. For Date, use UTC-based ISO truncation since DATE has no
+  // timezone. For strings (some older driver paths), strip after the 10th char.
+  const toYmd = (v: unknown): string => {
+    if (!v) return ''
+    if (v instanceof Date) return v.toISOString().slice(0, 10)
+    return String(v).slice(0, 10)
+  }
+  // start_time / end_time come as TIME strings from Postgres ("HH:MM:SS").
+  // Just grab the first five chars for <input type="time">.
+  const toHm = (v: unknown): string => {
+    if (!v) return ''
+    return String(v).slice(0, 5)
+  }
+
   const initialValues = {
     name: event.name ?? '',
     cover_emoji: (event.cover_emoji as string) ?? '',
-    event_date: event.event_date ? String(event.event_date).slice(0, 10) : '',
-    end_date: event.end_date ? String(event.end_date).slice(0, 10) : '',
-    start_time: event.start_time ? String(event.start_time).slice(0, 5) : '',
-    end_time: event.end_time ? String(event.end_time).slice(0, 5) : '',
+    event_date: toYmd(event.event_date),
+    end_date: toYmd(event.end_date),
+    start_time: toHm(event.start_time),
+    end_time: toHm(event.end_time),
     timezone: event.timezone ?? 'America/Los_Angeles',
     location_name: event.location_name ?? '',
     location_address: event.location_address ?? '',
@@ -63,7 +79,7 @@ export default async function EditEventPage({ params }: Params) {
     target_audience: event.target_audience ?? '',
     channels: event.channels ?? [],
     rsvp_link: event.rsvp_link ?? '',
-    rsvp_deadline: event.rsvp_deadline ? String(event.rsvp_deadline).slice(0, 10) : '',
+    rsvp_deadline: toYmd(event.rsvp_deadline),
     max_capacity: event.max_capacity ? String(event.max_capacity) : '',
     tags: Array.isArray(event.tags) ? event.tags.join(', ') : '',
     notes: event.notes ?? '',
