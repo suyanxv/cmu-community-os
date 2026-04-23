@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS events (
 
   tags                TEXT[] DEFAULT '{}',
   notes               TEXT,
+  custom_fields       JSONB NOT NULL DEFAULT '{}',
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

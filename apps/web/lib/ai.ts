@@ -87,6 +87,7 @@ export interface EventContext {
   rsvp_link?: string | null
   rsvp_deadline?: string | null
   max_capacity?: number | null
+  custom_fields?: Record<string, unknown> | null
   org_name: string
 }
 
@@ -98,6 +99,13 @@ function buildEventContextXml(event: EventContext): string {
   const sponsors = event.sponsors?.length
     ? event.sponsors.map((s) => `${s.name}${s.tier ? ` [${s.tier}]` : ''}`).join(', ')
     : 'None'
+
+  const customLines = event.custom_fields && Object.keys(event.custom_fields).length > 0
+    ? '\n' + Object.entries(event.custom_fields)
+        .filter(([, v]) => v !== null && v !== undefined && v !== '')
+        .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+        .join('\n')
+    : ''
 
   return `<event_context>
 Organization: ${event.org_name}
@@ -115,7 +123,7 @@ Tone: ${event.tone}
 Target Audience: ${event.target_audience || 'General community members'}
 RSVP Link: ${event.rsvp_link || 'N/A'}
 RSVP Deadline: ${event.rsvp_deadline || 'N/A'}
-Max Capacity: ${event.max_capacity || 'Open'}
+Max Capacity: ${event.max_capacity || 'Open'}${customLines}
 </event_context>`
 }
 
@@ -271,5 +279,76 @@ The body should be 3-4 paragraphs. Sign off as "${params.orgName} Team".`,
     return jsonMatch ? JSON.parse(jsonMatch[0]) : { subject: '', body: rawText }
   } catch {
     return { subject: '', body: rawText }
+  }
+}
+
+export type TemplateFieldType =
+  | 'text' | 'textarea' | 'date' | 'time' | 'email' | 'url' | 'number' | 'select'
+
+export interface TemplateField {
+  id: string          // snake_case field id
+  label: string       // human-readable label
+  type: TemplateFieldType
+  required: boolean
+  placeholder?: string
+  options?: string[]  // for select type
+  help?: string       // optional help text
+}
+
+export async function parseEventTemplate(input: string): Promise<TemplateField[]> {
+  const message = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 2048,
+    messages: [
+      {
+        role: 'user',
+        content: `You are parsing a community organization's event intake form template into a structured field schema.
+
+The input below is either (a) a URL to an existing form (Google Forms, Luma, Eventbrite, etc.), (b) raw text copied from a form, or (c) a free-form description of what fields the organizer wants to collect.
+
+INPUT:
+${input.slice(0, 8000)}
+
+TASK:
+Extract a list of form fields. Return ONLY a JSON array of objects with this shape:
+{
+  "id": "snake_case_id",
+  "label": "Human Readable Label",
+  "type": "text" | "textarea" | "date" | "time" | "email" | "url" | "number" | "select",
+  "required": true | false,
+  "placeholder": "optional hint text",
+  "options": ["opt1", "opt2"],
+  "help": "optional help text"
+}
+
+RULES:
+- Pick the most appropriate "type" — use "textarea" for multi-line things like descriptions/agendas
+- Use "select" + "options" for enums (dress code, tier, etc.)
+- Infer required fields (things like event name, date are usually required)
+- DO NOT include these — they are always in the core form: event name, event date, start time, end time, timezone, location, channels, tone
+- Only include CUSTOM fields unique to this organization
+- If the input is a URL you cannot resolve, make your best guess based on the organization context
+- Keep labels concise (under 50 chars)
+- Limit to 15 fields maximum
+
+Return ONLY the JSON array, no other text, no markdown fences.`,
+      },
+    ],
+  })
+
+  const rawText = message.content[0].type === 'text' ? message.content[0].text : '[]'
+  try {
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/)
+    if (!jsonMatch) return []
+    const fields = JSON.parse(jsonMatch[0]) as TemplateField[]
+    // Basic validation
+    return fields.filter((f): f is TemplateField =>
+      typeof f === 'object' &&
+      typeof f.id === 'string' &&
+      typeof f.label === 'string' &&
+      ['text', 'textarea', 'date', 'time', 'email', 'url', 'number', 'select'].includes(f.type)
+    )
+  } catch {
+    return []
   }
 }

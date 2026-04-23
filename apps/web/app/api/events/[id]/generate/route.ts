@@ -70,6 +70,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         rsvp_link: event.rsvp_link,
         rsvp_deadline: event.rsvp_deadline,
         max_capacity: event.max_capacity,
+        custom_fields: event.custom_fields,
         org_name: event.org_name,
       },
       channels as Channel[]
