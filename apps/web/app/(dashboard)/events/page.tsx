@@ -38,9 +38,17 @@ export default async function EventsPage() {
       AND status NOT IN ('past', 'archived')
   `
 
+  const toIsoDate = (v: unknown): string => {
+    if (typeof v === 'string') return v.slice(0, 10)
+    if (v instanceof Date) return v.toISOString().slice(0, 10)
+    return String(v ?? '').slice(0, 10)
+  }
+
   const rows = (await sql`
     SELECT
-      id, name, status, event_date, start_time, location_name, channels, max_capacity,
+      id, name, status,
+      to_char(event_date, 'YYYY-MM-DD') AS event_date,
+      start_time, location_name, channels, max_capacity,
       to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
       (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
     FROM events
@@ -49,7 +57,8 @@ export default async function EventsPage() {
     LIMIT 100
   `).map((r) => ({
     ...r,
-    event_date: typeof r.event_date === 'string' ? r.event_date : new Date(r.event_date).toISOString().slice(0, 10),
+    event_date: toIsoDate(r.event_date),
+    effective_end_date: toIsoDate(r.effective_end_date),
     channels: Array.isArray(r.channels) ? r.channels : [],
   })) as EventRow[]
 
