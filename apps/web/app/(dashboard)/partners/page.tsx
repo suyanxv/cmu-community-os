@@ -22,6 +22,15 @@ const STATUS_COLORS: Record<string, string> = {
   declined: 'bg-red-50 text-red-700',
 }
 
+type PartnerTab = 'all' | 'prospect' | 'active' | 'past' | 'declined'
+const TABS: { id: PartnerTab; label: string }[] = [
+  { id: 'all',      label: 'All' },
+  { id: 'prospect', label: 'Prospect' },
+  { id: 'active',   label: 'Active' },
+  { id: 'past',     label: 'Past' },
+  { id: 'declined', label: 'Declined' },
+]
+
 export default function PartnersPage() {
   const toast = useToast()
   const [partners, setPartners] = useState<Partner[]>([])
@@ -29,6 +38,8 @@ export default function PartnersPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ company_name: '', contact_name: '', email: '', type: 'sponsor', tier: '', status: 'prospect', notes: '' })
   const [saving, setSaving] = useState(false)
+  const [query, setQuery] = useState('')
+  const [tab, setTab] = useState<PartnerTab>('all')
 
   useEffect(() => {
     fetch('/api/partners')
@@ -107,26 +118,87 @@ export default function PartnersPage() {
           <p className="text-gray-500 mt-1">Add sponsors, venue hosts, and partner organizations</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {partners.map((p) => (
-            <Link key={p.id} href={`/partners/${p.id}`} className="block bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-gray-900">{p.company_name}</h2>
-                  {p.contact_name && <p className="text-sm text-gray-500 mt-0.5">{p.contact_name}{p.email ? ` · ${p.email}` : ''}</p>}
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{p.type}</span>
-                    {p.tier && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{p.tier}</span>}
-                  </div>
-                </div>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                  {p.status}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+            <div className="relative flex-1 max-w-md">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by company, contact, email…"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-500"
+              />
+            </div>
+            <div className="flex gap-1 bg-stone-100 p-1 rounded-lg w-fit overflow-x-auto">
+              {TABS.map((t) => {
+                const count = t.id === 'all' ? partners.length : partners.filter((p) => p.status === t.id).length
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    className={`px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
+                      tab === t.id ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {t.label} <span className="text-gray-400">{count}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <PartnerList partners={partners} query={query} tab={tab} />
+        </>
       )}
+    </div>
+  )
+}
+
+function PartnerList({ partners, query, tab }: { partners: Partner[]; query: string; tab: PartnerTab }) {
+  const q = query.trim().toLowerCase()
+  const filtered = partners.filter((p) => {
+    if (tab !== 'all' && p.status !== tab) return false
+    if (!q) return true
+    return (
+      p.company_name.toLowerCase().includes(q) ||
+      (p.contact_name?.toLowerCase().includes(q) ?? false) ||
+      (p.email?.toLowerCase().includes(q) ?? false) ||
+      p.type.toLowerCase().includes(q) ||
+      (p.tier?.toLowerCase().includes(q) ?? false)
+    )
+  })
+
+  if (filtered.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-3xl mb-2">🔎</p>
+        <p className="text-gray-500 text-sm">
+          {q ? `No partners match "${query}"` : `No ${tab === 'all' ? '' : tab} partners`}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {filtered.map((p) => (
+        <Link key={p.id} href={`/partners/${p.id}`} className="block bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-gray-900">{p.company_name}</h2>
+              {p.contact_name && <p className="text-sm text-gray-500 mt-0.5">{p.contact_name}{p.email ? ` · ${p.email}` : ''}</p>}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs bg-stone-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{p.type}</span>
+                {p.tier && <span className="text-xs bg-butter-100 text-butter-700 px-2 py-0.5 rounded-full">{p.tier}</span>}
+              </div>
+            </div>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
+              {p.status}
+            </span>
+          </div>
+        </Link>
+      ))}
     </div>
   )
 }

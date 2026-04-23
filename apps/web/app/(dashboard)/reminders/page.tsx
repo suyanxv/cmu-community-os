@@ -36,6 +36,7 @@ function RemindersContent() {
   const [form, setForm] = useState({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '' })
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState<'all' | 'pending' | 'done'>('pending')
+  const [query, setQuery] = useState('')
 
   const fetchReminders = useCallback(async () => {
     const params = new URLSearchParams({ status: filter === 'all' ? '' : filter })
@@ -93,17 +94,30 @@ function RemindersContent() {
         </button>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-        {(['pending', 'all', 'done'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 text-sm rounded-md font-medium capitalize transition-colors ${filter === f ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
-          >
-            {f}
-          </button>
-        ))}
+      {/* Search + filter tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search reminders by title, description, event…"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-500"
+          />
+        </div>
+        <div className="flex gap-1 bg-stone-100 p-1 rounded-lg w-fit">
+          {(['pending', 'all', 'done'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1 text-xs font-medium rounded-md capitalize transition-colors ${filter === f ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showForm && (
@@ -128,46 +142,82 @@ function RemindersContent() {
         </form>
       )}
 
-      {loading ? (
-        <CardListSkeleton count={4} />
-      ) : reminders.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-4">🔔</p>
-          <p className="text-gray-500">{filter === 'pending' ? 'All caught up! No pending reminders.' : 'No reminders found.'}</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {reminders.map((r) => (
-            <div key={r.id} className={`bg-white border rounded-xl p-4 flex items-start gap-4 ${r.status === 'done' ? 'opacity-60' : 'border-gray-200'}`}>
-              <button
-                onClick={() => r.status !== 'done' && markDone(r.id, r.title)}
-                className={`mt-0.5 h-5 w-5 rounded-full border-2 flex-shrink-0 transition-colors ${
-                  r.status === 'done'
-                    ? 'bg-green-500 border-green-500'
-                    : 'border-gray-300 hover:border-sage-500'
-                }`}
-              >
-                {r.status === 'done' && <span className="text-white text-xs flex items-center justify-center">✓</span>}
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className={`font-medium text-gray-900 ${r.status === 'done' ? 'line-through' : ''}`}>{r.title}</p>
-                {r.description && <p className="text-sm text-gray-500 mt-0.5">{r.description}</p>}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[r.priority]}`}>{r.priority}</span>
-                  {r.event_name && <span className="text-xs text-gray-400">📅 {r.event_name}</span>}
-                  {r.assigned_to_name && <span className="text-xs text-gray-400">👤 {r.assigned_to_name}</span>}
-                  {r.ai_generated && <span className="text-xs text-sage-400">✨ AI</span>}
-                </div>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className={`text-sm font-medium ${new Date(r.due_date) < new Date() && r.status !== 'done' ? 'text-red-500' : 'text-gray-500'}`}>
-                  {new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </p>
-              </div>
+      <ReminderList
+        reminders={reminders}
+        loading={loading}
+        query={query}
+        filter={filter}
+        markDone={markDone}
+      />
+    </div>
+  )
+}
+
+function ReminderList({
+  reminders, loading, query, filter, markDone,
+}: {
+  reminders: Reminder[]
+  loading: boolean
+  query: string
+  filter: 'all' | 'pending' | 'done'
+  markDone: (id: string, title: string) => void
+}) {
+  if (loading) return <CardListSkeleton count={4} />
+  if (reminders.length === 0) return (
+    <div className="text-center py-20">
+      <p className="text-4xl mb-4">🔔</p>
+      <p className="text-gray-500">{filter === 'pending' ? 'All caught up! No pending reminders.' : 'No reminders found.'}</p>
+    </div>
+  )
+
+  const q = query.trim().toLowerCase()
+  const filtered = q
+    ? reminders.filter((r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.description?.toLowerCase().includes(q) ?? false) ||
+        (r.event_name?.toLowerCase().includes(q) ?? false) ||
+        (r.assigned_to_name?.toLowerCase().includes(q) ?? false)
+      )
+    : reminders
+
+  if (filtered.length === 0) return (
+    <div className="text-center py-12">
+      <p className="text-3xl mb-2">🔎</p>
+      <p className="text-gray-500 text-sm">No reminders match &ldquo;{query}&rdquo;</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-2">
+      {filtered.map((r) => (
+        <div key={r.id} className={`bg-white border rounded-xl p-4 flex items-start gap-4 ${r.status === 'done' ? 'opacity-60' : 'border-gray-200'}`}>
+          <button
+            onClick={() => r.status !== 'done' && markDone(r.id, r.title)}
+            className={`mt-0.5 h-5 w-5 rounded-full border-2 flex-shrink-0 transition-colors ${
+              r.status === 'done'
+                ? 'bg-green-500 border-green-500'
+                : 'border-gray-300 hover:border-sage-500'
+            }`}
+          >
+            {r.status === 'done' && <span className="text-white text-xs flex items-center justify-center">✓</span>}
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className={`font-medium text-gray-900 ${r.status === 'done' ? 'line-through' : ''}`}>{r.title}</p>
+            {r.description && <p className="text-sm text-gray-500 mt-0.5">{r.description}</p>}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[r.priority]}`}>{r.priority}</span>
+              {r.event_name && <span className="text-xs text-gray-400">📅 {r.event_name}</span>}
+              {r.assigned_to_name && <span className="text-xs text-gray-400">👤 {r.assigned_to_name}</span>}
+              {r.ai_generated && <span className="text-xs text-sage-400">✨ AI</span>}
             </div>
-          ))}
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className={`text-sm font-medium ${new Date(r.due_date) < new Date() && r.status !== 'done' ? 'text-red-500' : 'text-gray-500'}`}>
+              {new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </p>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   )
 }
