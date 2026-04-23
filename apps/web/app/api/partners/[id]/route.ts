@@ -14,7 +14,7 @@ const UpdatePartnerSchema = z.object({
   phone: z.string().optional().nullable(),
   linkedin_url: z.string().url().optional().nullable(),
   website: z.string().url().optional().nullable(),
-  type: z.enum(['sponsor', 'venue', 'media', 'other']).optional(),
+  type: z.enum(['sponsor', 'venue', 'media', 'co_host', 'other']).optional(),
   tier: z.string().optional().nullable(),
   status: z.enum(['prospect', 'active', 'past', 'declined']).optional(),
   notes: z.string().optional().nullable(),

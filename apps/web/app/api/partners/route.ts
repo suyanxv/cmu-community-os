@@ -12,7 +12,7 @@ const CreatePartnerSchema = z.object({
   phone: z.string().optional().nullable(),
   linkedin_url: z.string().url().optional().nullable(),
   website: z.string().url().optional().nullable(),
-  type: z.enum(['sponsor', 'venue', 'media', 'other']).default('sponsor'),
+  type: z.enum(['sponsor', 'venue', 'media', 'co_host', 'other']).default('sponsor'),
   tier: z.string().optional().nullable(),
   status: z.enum(['prospect', 'active', 'past', 'declined']).default('prospect'),
   notes: z.string().optional().nullable(),

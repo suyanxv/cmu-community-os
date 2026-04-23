@@ -93,6 +93,7 @@ export default function PartnersPage() {
               <option value="sponsor">Sponsor</option>
               <option value="venue">Venue</option>
               <option value="media">Media</option>
+              <option value="co_host">Co-host org</option>
               <option value="other">Other</option>
             </select>
             <input placeholder="Tier (Gold, Silver…)" value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })} className={inputClass} />

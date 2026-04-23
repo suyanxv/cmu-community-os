@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/Toast'
 import type { TemplateField } from '@/lib/ai'
 import CheckInFieldsEditor from '@/components/events/CheckInFieldsEditor'
 import HostsSelector from '@/components/events/HostsSelector'
+import PartnerCombobox from '@/components/events/PartnerCombobox'
 
 type Speaker = { name: string; title: string; bio: string }
 type Sponsor = { name: string; tier: string }
@@ -40,7 +41,7 @@ interface EventFormData {
   checkin_fields: TemplateField[]
   host_user_ids: string[]
   category: 'internal' | 'partnered' | 'external'
-  co_hosts: string
+  co_hosts: string[]
 }
 
 const CHANNEL_OPTIONS = [
@@ -100,7 +101,7 @@ const defaultValues: EventFormData = {
   ],
   host_user_ids: [],
   category: 'internal',
-  co_hosts: '',
+  co_hosts: [],
 }
 
 interface EventFormProps {
@@ -158,7 +159,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
       ...form,
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-      co_hosts: form.co_hosts ? form.co_hosts.split(',').map((c) => c.trim()).filter(Boolean) : [],
+      co_hosts: form.co_hosts,
       custom_fields: customFields && customFields.length > 0 ? customValues : {},
       checkin_config: {
         ...(form.checkin_whatsapp_url    ? { whatsapp_url:    form.checkin_whatsapp_url }    : {}),
@@ -257,17 +258,17 @@ export default function EventForm({ initialValues, eventId, customFields, initia
             ))}
           </div>
         </div>
-        {(form.category === 'partnered' || form.co_hosts) && (
+        {(form.category === 'partnered' || form.co_hosts.length > 0) && (
           <div>
             <label className={labelClass}>Co-hosted with</label>
-            <input
-              type="text"
+            <PartnerCombobox
               value={form.co_hosts}
-              onChange={(e) => set('co_hosts', e.target.value)}
-              placeholder="Stanford Alumni, MITCNC, UPenn Alumni"
-              className={inputClass}
+              onChange={(next) => set('co_hosts', next)}
+              placeholder="Stanford Alumni, MITCNC, UPenn Alumni…"
             />
-            <p className="text-xs text-gray-400 mt-1">Comma-separated list of co-host organizations. Shows as chips on the event.</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Pick from existing partners or type a new name to create one. New entries are saved to your Partners CRM as co-host type.
+            </p>
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
