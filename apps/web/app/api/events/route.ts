@@ -33,6 +33,7 @@ const CreateEventSchema = z.object({
   custom_fields: z.record(z.string(), z.any()).optional().default({}),
   checkin_config: z.record(z.string(), z.any()).optional().default({}),
   host_user_ids: z.array(z.string().uuid()).optional().default([]),
+  cover_emoji: z.string().max(8).optional().nullable().transform((v) => v || null),
 })
 
 export async function GET(req: NextRequest) {
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
         location_name, location_address, location_url, is_virtual, event_mode,
         description, speakers, agenda, sponsors,
         tone, target_audience, channels, rsvp_link, rsvp_deadline, max_capacity,
-        tags, notes, custom_fields, checkin_config
+        tags, notes, custom_fields, checkin_config, cover_emoji
       ) VALUES (
         ${ctx.orgId}, ${ctx.userId}, ${data.name},
         ${eventDate}::date,
@@ -97,7 +98,8 @@ export async function POST(req: NextRequest) {
         ${data.max_capacity ?? null},
         ${data.tags}, ${data.notes ?? null},
         ${JSON.stringify(data.custom_fields ?? {})}::jsonb,
-        ${JSON.stringify(data.checkin_config ?? {})}::jsonb
+        ${JSON.stringify(data.checkin_config ?? {})}::jsonb,
+        ${data.cover_emoji ?? null}
       )
       RETURNING *
     `

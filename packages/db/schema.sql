@@ -88,7 +88,8 @@ CREATE TABLE IF NOT EXISTS events (
   tags                TEXT[] DEFAULT '{}',
   notes               TEXT,
   custom_fields       JSONB NOT NULL DEFAULT '{}',
-  checkin_config      JSONB NOT NULL DEFAULT '{}',  -- { whatsapp_url, welcome_message }
+  checkin_config      JSONB NOT NULL DEFAULT '{}',  -- { whatsapp_url, welcome_message, fields }
+  cover_emoji         TEXT,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

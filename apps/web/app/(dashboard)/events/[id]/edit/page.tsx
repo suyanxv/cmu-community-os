@@ -44,6 +44,7 @@ export default async function EditEventPage({ params }: Params) {
 
   const initialValues = {
     name: event.name ?? '',
+    cover_emoji: (event.cover_emoji as string) ?? '',
     event_date: event.event_date ? String(event.event_date).slice(0, 10) : '',
     end_date: event.end_date ? String(event.end_date).slice(0, 10) : '',
     start_time: event.start_time ? String(event.start_time).slice(0, 5) : '',

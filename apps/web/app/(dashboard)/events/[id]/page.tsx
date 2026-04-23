@@ -75,6 +75,7 @@ export default async function EventDetailPage({ params }: Params) {
             ← Back to Events
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
+            {event.cover_emoji ? <span className="text-3xl" aria-hidden>{event.cover_emoji as string}</span> : null}
             <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
             <EventStatusControl eventId={id} initialStatus={event.status} />
           </div>

@@ -12,6 +12,7 @@ async function getOrgId(clerkOrgId: string): Promise<string | null> {
 interface EventRow {
   id: string
   name: string
+  cover_emoji: string | null
   status: string
   event_date: string
   start_time: string | null
@@ -56,7 +57,7 @@ export default async function EventsPage() {
       SELECT
         id, name, status,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
-        start_time, location_name, location_address, event_mode, channels, tags, max_capacity,
+        start_time, location_name, location_address, event_mode, channels, tags, max_capacity, cover_emoji,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
         (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count,
         COALESCE((
@@ -87,7 +88,7 @@ export default async function EventsPage() {
       SELECT
         id, name, status,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
-        start_time, location_name, location_address, event_mode, channels, tags, max_capacity,
+        start_time, location_name, location_address, event_mode, channels, tags, max_capacity, cover_emoji,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
         (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
       FROM events

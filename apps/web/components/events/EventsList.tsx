@@ -17,6 +17,7 @@ interface EventHost {
 interface EventRow {
   id: string
   name: string
+  cover_emoji: string | null
   status: string
   event_date: string
   start_time: string | null
@@ -414,6 +415,7 @@ function EventRowCard({ event, dim, selectMode, selected, onToggle, onPublish }:
       <div className={`flex items-start justify-between gap-3 ${selectMode ? 'pr-7' : ''}`}>
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
+            {event.cover_emoji && <span className="text-lg" aria-hidden>{event.cover_emoji}</span>}
             <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${statusStyle}`}>
               {event.status}

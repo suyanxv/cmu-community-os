@@ -12,6 +12,7 @@ type Sponsor = { name: string; tier: string }
 
 interface EventFormData {
   name: string
+  cover_emoji: string
   event_date: string
   end_date: string
   start_time: string
@@ -65,6 +66,7 @@ const TIMEZONE_OPTIONS = [
 
 const defaultValues: EventFormData = {
   name: '',
+  cover_emoji: '',
   event_date: '',
   end_date: '',
   start_time: '',
@@ -218,16 +220,22 @@ export default function EventForm({ initialValues, eventId, customFields, initia
       {/* Basic Info */}
       <div className={sectionClass}>
         <h2 className="text-base font-semibold text-gray-900">Event Details</h2>
-        <div>
-          <label className={labelClass}>Event Name *</label>
-          <input
-            type="text"
-            required
-            value={form.name}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="CMU Seattle Alumni Mixer"
-            className={inputClass}
-          />
+        <div className="flex items-end gap-3">
+          <div className="shrink-0">
+            <label className={labelClass}>Cover</label>
+            <EmojiPicker value={form.cover_emoji} onChange={(v) => set('cover_emoji', v)} />
+          </div>
+          <div className="flex-1">
+            <label className={labelClass}>Event Name *</label>
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="CMU Seattle Alumni Mixer"
+              className={inputClass}
+            />
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -518,6 +526,61 @@ export default function EventForm({ initialValues, eventId, customFields, initia
         </button>
       </div>
     </form>
+  )
+}
+
+const EMOJI_SUGGESTIONS = [
+  '📅', '🎉', '🍷', '🍻', '☕', '🥂',
+  '🎤', '🎓', '🏛️', '🏢', '🏖️', '🌆',
+  '🤝', '🙌', '💼', '📢', '✨', '🎂',
+  '🏆', '🏃', '🎭', '🎨', '📸', '💡',
+]
+
+function EmojiPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="h-[42px] w-[42px] border border-gray-300 rounded-lg text-2xl flex items-center justify-center bg-white hover:border-sage-400"
+        title="Pick an emoji cover"
+      >
+        {value || <span className="text-gray-300 text-lg">+</span>}
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg p-2 w-56">
+          <div className="grid grid-cols-6 gap-1 mb-2">
+            {EMOJI_SUGGESTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => { onChange(emoji); setOpen(false) }}
+                className={`h-8 w-8 rounded text-xl flex items-center justify-center hover:bg-stone-100 ${value === emoji ? 'bg-sage-100' : ''}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 border-t border-gray-100 pt-2">
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => onChange(e.target.value.slice(0, 4))}
+              placeholder="Custom"
+              className="flex-1 text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sage-500"
+            />
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false) }}
+              className="text-xs text-gray-500 hover:text-red-600"
+            >
+              clear
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -33,6 +33,7 @@ const UpdateEventSchema = z.object({
   custom_fields: z.record(z.string(), z.any()).optional(),
   checkin_config: z.record(z.string(), z.any()).optional(),
   host_user_ids: z.array(z.string().uuid()).optional(),
+  cover_emoji: z.string().max(8).optional().nullable(),
 })
 
 type Params = { params: Promise<{ id: string }> }
@@ -104,6 +105,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         end_date         = CASE WHEN ${'end_date' in data} THEN ${endDate}::date ELSE end_date END,
         custom_fields    = CASE WHEN ${'custom_fields' in data} THEN ${JSON.stringify(data.custom_fields ?? {})}::jsonb ELSE custom_fields END,
         checkin_config   = CASE WHEN ${'checkin_config' in data} THEN ${JSON.stringify(data.checkin_config ?? {})}::jsonb ELSE checkin_config END,
+        cover_emoji      = CASE WHEN ${'cover_emoji' in data} THEN ${data.cover_emoji ?? null} ELSE cover_emoji END,
         updated_at       = NOW()
       WHERE id = ${id} AND org_id = ${ctx.orgId}
       RETURNING *
