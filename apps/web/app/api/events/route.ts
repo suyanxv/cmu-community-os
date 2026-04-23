@@ -7,9 +7,9 @@ import { errorResponse } from '@/lib/errors'
 
 const CreateEventSchema = z.object({
   name: z.string().min(1),
-  event_date: z.string(),
-  start_time: z.string(),
-  end_time: z.string().optional().nullable(),
+  event_date: z.string().min(1),
+  start_time: z.string().transform(v => v || null).nullable(),
+  end_time: z.string().transform(v => v || null).nullable(),
   timezone: z.string().default('America/Los_Angeles'),
   location_name: z.string().optional().nullable(),
   location_address: z.string().optional().nullable(),

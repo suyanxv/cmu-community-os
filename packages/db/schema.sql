@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS events (
   status              TEXT NOT NULL DEFAULT 'draft',
 
   event_date          DATE NOT NULL,
-  start_time          TIME NOT NULL,
+  start_time          TIME,
   end_time            TIME,
   timezone            TEXT NOT NULL DEFAULT 'America/Los_Angeles',
   location_name       TEXT,
