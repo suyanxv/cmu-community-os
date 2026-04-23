@@ -23,6 +23,7 @@ interface EventRow {
   location_address: string | null
   event_mode: 'in_person' | 'virtual' | 'hybrid'
   channels: string[]
+  tags: string[]
   rsvp_count: number
   max_capacity: number | null
   effective_end_date: string
@@ -46,7 +47,30 @@ export default function EventsList({ events }: { events: EventRow[] }) {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
   const today = localToday()
+
+  // Distinct tags across the fetched events, sorted alphabetically
+  const allTags = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const e of events) {
+      for (const t of e.tags ?? []) {
+        counts.set(t, (counts.get(t) ?? 0) + 1)
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([tag, count]) => ({ tag, count }))
+  }, [events])
+
+  const toggleTag = (tag: string) => {
+    setActiveTags((prev) => {
+      const next = new Set(prev)
+      if (next.has(tag)) next.delete(tag)
+      else next.add(tag)
+      return next
+    })
+  }
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -91,15 +115,21 @@ export default function EventsList({ events }: { events: EventRow[] }) {
       if (tab === 'upcoming' && e.effective_end_date < today) return false
       if (tab === 'past' && e.effective_end_date >= today) return false
       if (tab === 'draft' && e.status !== 'draft') return false
+      // Tag filter: AND across active tags (event must have all selected)
+      if (activeTags.size > 0) {
+        const eventTags = new Set(e.tags ?? [])
+        for (const t of activeTags) if (!eventTags.has(t)) return false
+      }
       // Text filter
       if (!q) return true
       return (
         e.name.toLowerCase().includes(q) ||
         (e.location_name?.toLowerCase().includes(q) ?? false) ||
-        e.channels.some((ch) => ch.includes(q))
+        e.channels.some((ch) => ch.includes(q)) ||
+        (e.tags ?? []).some((t) => t.toLowerCase().includes(q))
       )
     })
-  }, [events, query, tab, today])
+  }, [events, query, tab, today, activeTags])
 
   // Group upcoming + past sections only when viewing "All"
   const upcoming = tab === 'all'
@@ -186,6 +216,38 @@ export default function EventsList({ events }: { events: EventRow[] }) {
           </button>
         )}
       </div>
+
+      {/* Tag filter chips */}
+      {allTags.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap mb-4 -mt-1">
+          <span className="text-xs text-gray-500 mr-1">Tags:</span>
+          {allTags.map(({ tag, count }) => {
+            const active = activeTags.has(tag)
+            return (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
+                  active
+                    ? 'bg-sage-100 border-sage-400 text-sage-800'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-sage-300'
+                }`}
+              >
+                {tag}
+                <span className="text-gray-400">{count}</span>
+              </button>
+            )
+          })}
+          {activeTags.size > 0 && (
+            <button
+              onClick={() => setActiveTags(new Set())}
+              className="text-xs text-gray-500 hover:text-gray-700 underline ml-1"
+            >
+              clear
+            </button>
+          )}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-16">

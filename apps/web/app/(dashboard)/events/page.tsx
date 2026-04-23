@@ -19,6 +19,7 @@ interface EventRow {
   location_address: string | null
   event_mode: 'in_person' | 'virtual' | 'hybrid'
   channels: string[]
+  tags: string[]
   rsvp_count: number
   max_capacity: number | null
   effective_end_date: string
@@ -55,7 +56,7 @@ export default async function EventsPage() {
       SELECT
         id, name, status,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
-        start_time, location_name, location_address, event_mode, channels, max_capacity,
+        start_time, location_name, location_address, event_mode, channels, tags, max_capacity,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
         (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count,
         COALESCE((
@@ -77,6 +78,7 @@ export default async function EventsPage() {
       event_date: toIsoDate(r.event_date),
       effective_end_date: toIsoDate(r.effective_end_date),
       channels: Array.isArray(r.channels) ? r.channels : [],
+      tags: Array.isArray(r.tags) ? r.tags : [],
       hosts: Array.isArray(r.hosts) ? r.hosts : [],
     })) as EventRow[]
   } catch {
@@ -85,7 +87,7 @@ export default async function EventsPage() {
       SELECT
         id, name, status,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
-        start_time, location_name, location_address, event_mode, channels, max_capacity,
+        start_time, location_name, location_address, event_mode, channels, tags, max_capacity,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
         (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
       FROM events
@@ -97,6 +99,7 @@ export default async function EventsPage() {
       event_date: toIsoDate(r.event_date),
       effective_end_date: toIsoDate(r.effective_end_date),
       channels: Array.isArray(r.channels) ? r.channels : [],
+      tags: Array.isArray(r.tags) ? r.tags : [],
       hosts: [],
     })) as EventRow[]
   }
