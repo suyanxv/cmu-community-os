@@ -212,8 +212,26 @@ export default function SettingsPage() {
 
       {/* Clerk org profile (invite, leave, etc.) */}
       <div className={sectionClass}>
-        <h2 className="text-base font-semibold text-gray-900 mb-2">Organization & Members</h2>
-        <OrganizationProfile routing="hash" />
+        <h2 className="text-base font-semibold text-gray-900 mb-3">Organization & Members</h2>
+        <div className="-mx-4 sm:-mx-6 -mb-4 sm:-mb-6 overflow-hidden">
+          <OrganizationProfile
+            routing="hash"
+            appearance={{
+              elements: {
+                // Make Clerk's component fill the card width instead of its
+                // default fixed layout (which overflows on narrow phones).
+                rootBox: 'w-full',
+                cardBox: 'w-full shadow-none border-0 rounded-none',
+                // Hide the internal left nav — there's only one top-level
+                // section (Organization Profile), so the nav is dead weight
+                // and the main thing pushing content off-screen.
+                navbar: 'hidden',
+                navbarMobileMenuButton: 'hidden',
+                pageScrollBox: 'p-0',
+              },
+            }}
+          />
+        </div>
       </div>
     </div>
   )
