@@ -295,6 +295,87 @@ The body should be 3-4 paragraphs. Sign off as "${params.orgName} Team".`,
   }
 }
 
+export interface ParsedEvent {
+  name: string
+  event_date: string | null       // YYYY-MM-DD
+  end_date: string | null         // YYYY-MM-DD (null if single-day)
+  start_time: string | null       // HH:MM (24h)
+  end_time: string | null
+  timezone: string                // default from org
+  location_name: string | null
+  location_address: string | null
+  is_virtual: boolean
+  event_mode: 'in_person' | 'virtual' | 'hybrid'
+  description: string | null
+  max_capacity: number | null
+  tags: string[]
+  is_past: boolean                // computed by Claude based on today's date
+  source_line: string | null      // original snippet that produced this event (for user reference)
+}
+
+export async function parseBulkEvents(input: string, orgName: string): Promise<ParsedEvent[]> {
+  const today = new Date().toISOString().slice(0, 10)
+
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4096,
+    messages: [
+      {
+        role: 'user',
+        content: `You are parsing event data for the organization "${orgName}" into a structured list.
+
+TODAY'S DATE: ${today}
+
+INPUT (could be CSV with or without headers, a free-text list, or a description):
+${input.slice(0, 20000)}
+
+TASK: Extract EVERY event mentioned in the input. Return ONLY a JSON array of objects with this shape:
+{
+  "name": string,                                   // event title, required
+  "event_date": "YYYY-MM-DD" | null,                // start date if known
+  "end_date": "YYYY-MM-DD" | null,                  // set only if multi-day
+  "start_time": "HH:MM" | null,                     // 24-hour format
+  "end_time": "HH:MM" | null,
+  "timezone": string,                               // "America/Los_Angeles" unless explicit
+  "location_name": string | null,
+  "location_address": string | null,
+  "is_virtual": boolean,
+  "event_mode": "in_person" | "virtual" | "hybrid",
+  "description": string | null,                    // keep short, 1-3 sentences
+  "max_capacity": number | null,
+  "tags": string[],
+  "is_past": boolean,                               // true if event_date < ${today}
+  "source_line": string                             // quote of the original line/snippet for this event
+}
+
+RULES:
+- Return an empty array [] if you can't find any events
+- Parse any date format into YYYY-MM-DD (e.g. "March 15" → "${today.slice(0, 4)}-03-15"; "last Friday" → resolve relative to TODAY)
+- If year is ambiguous, assume the most recent past occurrence if other context implies past, else the upcoming occurrence
+- Leave fields null rather than guessing — user will fill them in later
+- If a value contains commas (e.g. address), preserve it correctly (don't split)
+- For CSV input: auto-detect headers, map columns intelligently to the schema
+- Split the input into separate events based on dates, line breaks, or repeating patterns
+- is_past: compute from event_date vs TODAY (${today}); if date unknown, assume future
+- Keep descriptions concise (1-3 sentences). Do not invent information not in the input.
+- tags: extract any topical keywords (e.g. "networking", "speaker", "gala")
+
+Return ONLY the JSON array, no commentary, no markdown code fences.`,
+      },
+    ],
+  })
+
+  const rawText = message.content[0].type === 'text' ? message.content[0].text : '[]'
+  try {
+    const match = rawText.match(/\[[\s\S]*\]/)
+    if (!match) return []
+    const parsed = JSON.parse(match[0]) as ParsedEvent[]
+    return parsed.filter((e): e is ParsedEvent => typeof e?.name === 'string' && e.name.trim().length > 0)
+  } catch {
+    return []
+  }
+}
+
 export type TemplateFieldType =
   | 'text' | 'textarea' | 'date' | 'time' | 'email' | 'url' | 'number' | 'select'
 
