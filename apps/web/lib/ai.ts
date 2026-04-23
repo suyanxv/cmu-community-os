@@ -325,6 +325,7 @@ export interface ParsedEvent {
 
 export async function parseBulkEvents(input: string, orgName: string): Promise<ParsedEvent[]> {
   const today = new Date().toISOString().slice(0, 10)
+  const currentYear = today.slice(0, 4)
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -332,52 +333,67 @@ export async function parseBulkEvents(input: string, orgName: string): Promise<P
     messages: [
       {
         role: 'user',
-        content: `You are parsing event data for the organization "${orgName}" into a structured list.
+        content: `You are a tenacious event extractor for "${orgName}". Input is messy: Google Sheet pastes, CSV with stray quotes, mailing-list digests, or free text. Your job is to find event-shaped things and extract them with whatever fields are available.
 
-TODAY'S DATE: ${today}
+TODAY: ${today}
 
-INPUT (could be CSV with or without headers, a free-text list, or a description):
+INPUT:
 ${input.slice(0, 20000)}
 
-TASK: Extract EVERY event mentioned in the input. Return ONLY a JSON array of objects with this shape:
+Return ONLY a JSON array. Each element shape:
 {
-  "name": string,                                   // event title, required
-  "event_date": "YYYY-MM-DD" | null,                // start date if known
-  "end_date": "YYYY-MM-DD" | null,                  // set only if multi-day
-  "start_time": "HH:MM" | null,                     // 24-hour format
+  "name": string,                                    // required — best-effort event title
+  "event_date": "YYYY-MM-DD" | null,
+  "end_date": "YYYY-MM-DD" | null,                   // only for multi-day
+  "start_time": "HH:MM" | null,                      // 24-hour
   "end_time": "HH:MM" | null,
-  "timezone": string,                               // "America/Los_Angeles" unless explicit
+  "timezone": string,                                // default "America/Los_Angeles"
   "location_name": string | null,
   "location_address": string | null,
   "is_virtual": boolean,
   "event_mode": "in_person" | "virtual" | "hybrid",
-  "description": string | null,                    // keep short, 1-3 sentences
+  "description": string | null,                     // 1-3 sentences, no fabrication
   "max_capacity": number | null,
   "tags": string[],
-  "is_past": boolean,                               // true if event_date < ${today}
-  "source_line": string                             // quote of the original line/snippet for this event
+  "is_past": boolean,                                // event_date < ${today}
+  "source_line": string | null                       // the snippet that produced this event
 }
 
-RULES:
-- Return an empty array [] if you can't find any events
-- Parse any date format into YYYY-MM-DD (e.g. "March 15" → "${today.slice(0, 4)}-03-15"; "last Friday" → resolve relative to TODAY)
-- If year is ambiguous, assume the most recent past occurrence if other context implies past, else the upcoming occurrence
-- Leave fields null rather than guessing — user will fill them in later
-- If a value contains commas (e.g. address), preserve it correctly (don't split)
-- For CSV input: auto-detect headers, map columns intelligently to the schema
-- Split the input into separate events based on dates, line breaks, or repeating patterns
-- is_past: compute from event_date vs TODAY (${today}); if date unknown, assume future
-- Keep descriptions concise (1-3 sentences). Do not invent information not in the input.
-- tags: extract any topical keywords (e.g. "networking", "speaker", "gala")
+EXTRACTION POLICY (important):
+- EXTRACT AGGRESSIVELY. If you see a title + any date signal, extract it. A missing field is fine — user will fill it in. Empty result should only happen when the input truly has no events, not when the format is messy.
+- The "DATE - TITLE" pattern is common in alumni-org sheets:
+    "2/26 - CMU-SV Mock Interview Extravaganza"           → {name: "CMU-SV Mock Interview Extravaganza", event_date: "${currentYear}-02-26"}
+    "3/14 - Tartan Trailblazers: Stanford Dish Hike!"      → {name: "Tartan Trailblazers: Stanford Dish Hike!", event_date: "${currentYear}-03-14"}
+    "1/31 - CMU X MITCNC Lunar New Year Banquet"           → {name: "CMU X MITCNC Lunar New Year Banquet", event_date: "${currentYear}-01-31"}
+- URLs attached to a title (givecampus.com, luma.com, signupgenius.com, alumcommunity.mit.edu, monday.com forms) are metadata, not titles. Ignore the URL text when picking the name.
+- Attendance notes ("~15 alums", "3 CMU alums", "Unknown", "~65 attendees") are description hints, not event names. Optionally include in description.
+- CSV pastes may have stray quotes (") wrapping cells. Ignore them.
+- Blank rows, headers ("Partnered event", "CMU events"), column labels, and legend rows are NOT events — skip silently.
+- Idea/backlog lines without any date signal are NOT events — skip (user has a separate Ideas backlog for those).
 
-Return ONLY the JSON array, no commentary, no markdown code fences.`,
+DATE POLICY:
+- "3/14" or "March 14" with no year → ${currentYear}
+- "3/14" in a clearly-past row (e.g. attendance recorded) → ${currentYear} if not yet past, else the prior year
+- "(Sunday)" / "Last Friday" / "next week" → resolve relative to TODAY (${today})
+- If you genuinely can't determine a date, set event_date: null and skip is_past resolution (assume future)
+
+OTHER RULES:
+- Preserve title casing and punctuation from the source. "CMU-SV" stays "CMU-SV".
+- Keep descriptions concise (1-3 sentences). Never invent information.
+- tags: extract keyword-style labels from the content (e.g. "networking", "speaker", "hike"). Don't force tags if none are obvious.
+- source_line: quote the portion of input that generated this event so the user can audit.
+
+Return ONLY the JSON array. No prose, no code fences.`,
       },
     ],
   })
 
   const rawText = message.content[0].type === 'text' ? message.content[0].text : '[]'
   try {
-    const match = rawText.match(/\[[\s\S]*\]/)
+    // Prefer the first JSON array in the response. Claude occasionally wraps
+    // in ```json fences despite being told not to — strip defensively.
+    const stripped = rawText.replace(/```(?:json)?/gi, '').trim()
+    const match = stripped.match(/\[[\s\S]*\]/)
     if (!match) return []
     const parsed = JSON.parse(match[0]) as ParsedEvent[]
     return parsed.filter((e): e is ParsedEvent => typeof e?.name === 'string' && e.name.trim().length > 0)
