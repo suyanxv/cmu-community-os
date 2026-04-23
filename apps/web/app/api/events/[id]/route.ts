@@ -75,18 +75,25 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json()
     const data = UpdateEventSchema.parse(body)
 
-    // Normalize date strings to YYYY-MM-DD before casting to date
+    // Normalize date strings to YYYY-MM-DD before casting to date.
     const eventDate    = data.event_date    ? String(data.event_date).slice(0, 10) : null
     const endDate      = 'end_date' in data && data.end_date ? String(data.end_date).slice(0, 10) : null
     const rsvpDeadline = 'rsvp_deadline' in data && data.rsvp_deadline ? String(data.rsvp_deadline).slice(0, 10) : null
+
+    // Empty time strings fail to cast to TIME in Postgres. Coerce "" -> null
+    // so the form can submit blanks for optional fields without 500ing.
+    const startTime = data.start_time && data.start_time.trim() !== '' ? data.start_time : null
+    const endTime   = 'end_time' in data
+      ? (data.end_time && String(data.end_time).trim() !== '' ? data.end_time : null)
+      : undefined
 
     const rows = await sql`
       UPDATE events SET
         name             = COALESCE(${data.name ?? null}, name),
         status           = COALESCE(${data.status ?? null}, status),
         event_date       = COALESCE(${eventDate}::date, event_date),
-        start_time       = COALESCE(${data.start_time ?? null}, start_time),
-        end_time         = CASE WHEN ${('end_time' in data)} THEN ${data.end_time ?? null} ELSE end_time END,
+        start_time       = COALESCE(${startTime}, start_time),
+        end_time         = CASE WHEN ${endTime !== undefined} THEN ${endTime ?? null} ELSE end_time END,
         timezone         = COALESCE(${data.timezone ?? null}, timezone),
         location_name    = CASE WHEN ${'location_name' in data} THEN ${data.location_name ?? null} ELSE location_name END,
         location_address = CASE WHEN ${'location_address' in data} THEN ${data.location_address ?? null} ELSE location_address END,
