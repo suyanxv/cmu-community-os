@@ -67,36 +67,42 @@ export default async function EventDetailPage({ params }: Params) {
   const hasContent = content.length > 0
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700 mb-2 block">
-            ← Back to Events
-          </Link>
-          <div className="flex items-center gap-3 flex-wrap">
-            {event.cover_emoji ? <span className="text-3xl" aria-hidden>{event.cover_emoji as string}</span> : null}
-            <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
-            <EventStatusControl eventId={id} initialStatus={event.status} />
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+      {/* Back link */}
+      <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700 mb-3 block">
+        ← Back to Events
+      </Link>
+
+      {/* Title block */}
+      <div className="mb-4">
+        <div className="flex items-start gap-3 flex-wrap">
+          {event.cover_emoji ? <span className="text-3xl leading-none" aria-hidden>{event.cover_emoji as string}</span> : null}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-gray-900 break-words">{event.name}</h1>
+              <EventStatusControl eventId={id} initialStatus={event.status} />
+            </div>
+            <p className="text-gray-500 mt-1 text-sm">
+              {formatEventDate(event.event_date as string)}
+              {event.start_time && ` · ${event.start_time}`}
+              {event.location_name && ` · ${event.location_name}`}
+            </p>
           </div>
-          <p className="text-gray-500 mt-1">
-            {formatEventDate(event.event_date as string)}
-            {event.start_time && ` · ${event.start_time}`}
-            {event.location_name && ` · ${event.location_name}`}
-          </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <DeleteEventButton eventId={id} eventName={event.name} />
-          <ShareEventButton eventId={id} />
-          <DuplicateEventButton eventId={id} />
-          <GenerateRemindersButton eventId={id} />
-          <Link href={`/events/${id}/edit`} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">
-            Edit
-          </Link>
-          <Link href={`/events/${id}/content`} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700">
-            {hasContent ? 'View Content' : 'Add Content'}
-          </Link>
-        </div>
+      </div>
+
+      {/* Action bar — always wraps onto its own line(s) on mobile */}
+      <div className="flex items-center gap-2 flex-wrap mb-6">
+        <Link href={`/events/${id}/content`} className="inline-flex items-center px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 font-medium">
+          {hasContent ? 'View Content' : 'Add Content'}
+        </Link>
+        <Link href={`/events/${id}/edit`} className="inline-flex items-center px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">
+          Edit
+        </Link>
+        <GenerateRemindersButton eventId={id} />
+        <DuplicateEventButton eventId={id} />
+        <ShareEventButton eventId={id} />
+        <DeleteEventButton eventId={id} eventName={event.name} />
       </div>
 
       {/* Quick stats */}
@@ -160,30 +166,30 @@ function CapacityStats({
     : 'bg-sage-500'
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <p className="text-sm text-gray-500">Confirmed RSVPs</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{rsvpCount}</p>
+    <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+      <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
+        <p className="text-[11px] sm:text-sm text-gray-500">Confirmed RSVPs</p>
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{rsvpCount}</p>
         {maxCapacity && (
-          <p className="text-xs text-gray-400 mt-1">of {maxCapacity} capacity</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">of {maxCapacity}</p>
         )}
       </div>
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <p className="text-sm text-gray-500">Total Guests</p>
-        <div className="flex items-baseline gap-2 mt-1">
-          <p className="text-2xl font-bold text-gray-900">{totalGuests}</p>
-          {pct !== null && <p className={`text-sm font-medium ${pct >= 100 ? 'text-red-500' : pct >= 80 ? 'text-butter-700' : 'text-sage-700'}`}>{pct}%</p>}
+      <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
+        <p className="text-[11px] sm:text-sm text-gray-500">Total Guests</p>
+        <div className="flex items-baseline gap-1 sm:gap-2 mt-1">
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalGuests}</p>
+          {pct !== null && <p className={`text-xs sm:text-sm font-medium ${pct >= 100 ? 'text-red-500' : pct >= 80 ? 'text-butter-700' : 'text-sage-700'}`}>{pct}%</p>}
         </div>
         {pct !== null && (
-          <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden mt-2">
+          <div className="h-1 sm:h-1.5 bg-stone-100 rounded-full overflow-hidden mt-2">
             <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
           </div>
         )}
       </div>
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <p className="text-sm text-gray-500">Channels</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{channels.length}</p>
-        <p className="text-xs text-gray-400 mt-1 truncate">{channels.join(', ') || 'None'}</p>
+      <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 min-w-0">
+        <p className="text-[11px] sm:text-sm text-gray-500">Channels</p>
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{channels.length}</p>
+        <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">{channels.join(', ') || 'None'}</p>
       </div>
     </div>
   )
