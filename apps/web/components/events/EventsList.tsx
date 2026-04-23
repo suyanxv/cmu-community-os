@@ -21,6 +21,7 @@ interface EventRow {
   cover_emoji: string | null
   status: string
   category: 'internal' | 'partnered' | 'external'
+  co_hosts: string[]
   event_date: string
   start_time: string | null
   location_name: string | null
@@ -312,6 +313,7 @@ export default function EventsList({ events }: { events: EventRow[] }) {
           effective_end_date: e.effective_end_date,
           status: e.status,
           category: e.category ?? 'internal',
+          co_hosts: e.co_hosts ?? [],
           location_name: e.location_name,
           rsvp_count: e.rsvp_count,
         }))} />
@@ -475,6 +477,16 @@ function EventRowCard({ event, dim, selectMode, selected, onToggle, onPublish }:
             <span className="truncate">{locationText}</span>
             {mode === 'hybrid' && <span className="text-[11px] bg-lavender-100 text-lavender-700 px-1.5 py-0.5 rounded">Hybrid</span>}
           </p>
+          {event.co_hosts && event.co_hosts.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[11px] text-gray-400">w/</span>
+              {event.co_hosts.map((c) => (
+                <span key={c} className="text-[11px] bg-butter-50 border border-butter-200 text-butter-700 px-1.5 py-0.5 rounded">
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
           {event.hosts && event.hosts.length > 0 && (
             <div className="flex items-center gap-1.5 text-sm text-gray-500">
               <div className="flex -space-x-1.5 shrink-0">

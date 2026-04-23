@@ -72,6 +72,7 @@ export default async function EditEventPage({ params }: Params) {
     checkin_fields: ((event.checkin_config as { fields?: TemplateField[] } | null)?.fields as TemplateField[] | undefined) ?? DEFAULT_CHECKIN_FIELDS,
     host_user_ids: hostUserIds,
     category: (event.category ?? 'internal') as 'internal' | 'partnered' | 'external',
+    co_hosts: Array.isArray(event.co_hosts) ? event.co_hosts.join(', ') : '',
   }
 
   return (

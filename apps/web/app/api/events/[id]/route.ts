@@ -35,6 +35,7 @@ const UpdateEventSchema = z.object({
   checkin_config: z.record(z.string(), z.any()).optional(),
   host_user_ids: z.array(z.string().uuid()).optional(),
   cover_emoji: z.string().max(8).optional().nullable(),
+  co_hosts: z.array(z.string()).optional(),
 })
 
 type Params = { params: Promise<{ id: string }> }
@@ -108,6 +109,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         checkin_config   = CASE WHEN ${'checkin_config' in data} THEN ${JSON.stringify(data.checkin_config ?? {})}::jsonb ELSE checkin_config END,
         cover_emoji      = CASE WHEN ${'cover_emoji' in data} THEN ${data.cover_emoji ?? null} ELSE cover_emoji END,
         category         = COALESCE(${data.category ?? null}, category),
+        co_hosts         = COALESCE(${data.co_hosts ?? null}, co_hosts),
         updated_at       = NOW()
       WHERE id = ${id} AND org_id = ${ctx.orgId}
       RETURNING *

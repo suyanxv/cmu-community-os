@@ -40,6 +40,7 @@ interface EventFormData {
   checkin_fields: TemplateField[]
   host_user_ids: string[]
   category: 'internal' | 'partnered' | 'external'
+  co_hosts: string
 }
 
 const CHANNEL_OPTIONS = [
@@ -99,6 +100,7 @@ const defaultValues: EventFormData = {
   ],
   host_user_ids: [],
   category: 'internal',
+  co_hosts: '',
 }
 
 interface EventFormProps {
@@ -156,6 +158,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
       ...form,
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+      co_hosts: form.co_hosts ? form.co_hosts.split(',').map((c) => c.trim()).filter(Boolean) : [],
       custom_fields: customFields && customFields.length > 0 ? customValues : {},
       checkin_config: {
         ...(form.checkin_whatsapp_url    ? { whatsapp_url:    form.checkin_whatsapp_url }    : {}),
@@ -254,6 +257,19 @@ export default function EventForm({ initialValues, eventId, customFields, initia
             ))}
           </div>
         </div>
+        {(form.category === 'partnered' || form.co_hosts) && (
+          <div>
+            <label className={labelClass}>Co-hosted with</label>
+            <input
+              type="text"
+              value={form.co_hosts}
+              onChange={(e) => set('co_hosts', e.target.value)}
+              placeholder="Stanford Alumni, MITCNC, UPenn Alumni"
+              className={inputClass}
+            />
+            <p className="text-xs text-gray-400 mt-1">Comma-separated list of co-host organizations. Shows as chips on the event.</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Start Date *</label>

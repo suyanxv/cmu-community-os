@@ -259,6 +259,18 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
         )}
         <DetailRow label="Event Mode">{modeLabel}</DetailRow>
 
+        {Array.isArray(event.co_hosts) && (event.co_hosts as string[]).length > 0 ? (
+          <DetailRow label="Co-hosted With">
+            <div className="flex flex-wrap gap-1">
+              {(event.co_hosts as string[]).map((c) => (
+                <span key={c} className="text-xs bg-butter-50 border border-butter-200 text-butter-700 px-2 py-0.5 rounded-full">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </DetailRow>
+        ) : null}
+
         {event.end_date && String(event.end_date).slice(0, 10) !== String(event.event_date).slice(0, 10) ? (
           <DetailRow label="End Date">
             {formatEventDate(event.end_date as string)}

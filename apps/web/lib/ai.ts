@@ -83,6 +83,7 @@ export interface EventContext {
   description?: string | null
   speakers?: Array<{ name: string; title?: string; bio?: string }> | null
   hosts?: Array<{ name: string; title?: string | null }> | null
+  co_hosts?: string[] | null
   agenda?: string | null
   sponsors?: Array<{ name: string; tier?: string }> | null
   tone: string
@@ -107,6 +108,8 @@ function buildEventContextXml(event: EventContext): string {
     ? event.hosts.map((h) => `${h.name}${h.title ? ` (${h.title})` : ''}`).join(', ')
     : null
 
+  const coHosts = event.co_hosts?.length ? event.co_hosts.join(', ') : null
+
   const customLines = event.custom_fields && Object.keys(event.custom_fields).length > 0
     ? '\n' + Object.entries(event.custom_fields)
         .filter(([, v]) => v !== null && v !== undefined && v !== '')
@@ -128,6 +131,7 @@ Location: ${event.event_mode === 'virtual' ? 'Virtual' : [event.location_name, e
 Location URL: ${event.location_url || 'N/A'}
 Event Mode: ${modeLabel}
 ${hosts ? `Hosted By: ${hosts}` : ''}
+${coHosts ? `Co-hosted With: ${coHosts}` : ''}
 Description: ${event.description || 'N/A'}
 Speakers / Guests: ${speakers}
 Agenda: ${event.agenda || 'N/A'}

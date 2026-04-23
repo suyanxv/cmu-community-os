@@ -80,6 +80,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         description: event.description,
         speakers: event.speakers,
         hosts: event.hosts,
+        co_hosts: Array.isArray(event.co_hosts) ? event.co_hosts : [],
         agenda: event.agenda,
         sponsors: event.sponsors,
         tone: event.tone,

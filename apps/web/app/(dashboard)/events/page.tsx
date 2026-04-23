@@ -15,6 +15,7 @@ interface EventRow {
   cover_emoji: string | null
   status: string
   category: 'internal' | 'partnered' | 'external'
+  co_hosts: string[]
   event_date: string
   start_time: string | null
   location_name: string | null
@@ -58,7 +59,7 @@ export default async function EventsPage() {
   try {
     rows = (await sql`
       SELECT
-        id, name, status, category,
+        id, name, status, category, co_hosts,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
         start_time, location_name, location_address, event_mode, channels, tags, max_capacity, cover_emoji,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
@@ -83,13 +84,14 @@ export default async function EventsPage() {
       effective_end_date: toIsoDate(r.effective_end_date),
       channels: Array.isArray(r.channels) ? r.channels : [],
       tags: Array.isArray(r.tags) ? r.tags : [],
+      co_hosts: Array.isArray(r.co_hosts) ? r.co_hosts : [],
       hosts: Array.isArray(r.hosts) ? r.hosts : [],
     })) as EventRow[]
   } catch {
     // Fallback: event_hosts table missing, fetch without it
     rows = (await sql`
       SELECT
-        id, name, status, category,
+        id, name, status, category, co_hosts,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
         start_time, location_name, location_address, event_mode, channels, tags, max_capacity, cover_emoji,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
@@ -104,6 +106,7 @@ export default async function EventsPage() {
       effective_end_date: toIsoDate(r.effective_end_date),
       channels: Array.isArray(r.channels) ? r.channels : [],
       tags: Array.isArray(r.tags) ? r.tags : [],
+      co_hosts: Array.isArray(r.co_hosts) ? r.co_hosts : [],
       hosts: [],
     })) as EventRow[]
   }

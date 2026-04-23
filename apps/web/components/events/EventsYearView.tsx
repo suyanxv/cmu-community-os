@@ -12,6 +12,7 @@ interface YearEvent {
   effective_end_date: string
   status: string
   category: 'internal' | 'partnered' | 'external'
+  co_hosts: string[]
   location_name: string | null
   rsvp_count: number
 }
@@ -162,7 +163,12 @@ function EventLine({ e }: { e: YearEvent }) {
         <div className="flex items-start gap-1.5">
           <span className="text-gray-500 font-medium shrink-0 tabular-nums">{day}</span>
           {e.cover_emoji && <span className="shrink-0" aria-hidden>{e.cover_emoji}</span>}
-          <span className={`leading-snug flex-1 min-w-0 ${textCls}`}>{e.name}</span>
+          <span className={`leading-snug flex-1 min-w-0 ${textCls}`}>
+            {e.name}
+            {e.co_hosts.length > 0 && (
+              <span className="text-butter-700 font-normal"> · w/ {e.co_hosts.join(', ')}</span>
+            )}
+          </span>
         </div>
       </Link>
     </li>
