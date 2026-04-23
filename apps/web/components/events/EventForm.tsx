@@ -97,15 +97,23 @@ const defaultValues: EventFormData = {
 interface EventFormProps {
   initialValues?: Partial<EventFormData>
   eventId?: string
+  /** Template schema for org-level custom fields. If provided, a "Custom Fields" section is rendered. */
+  customFields?: TemplateField[]
+  /** Pre-filled values for custom fields (used on edit). */
+  initialCustomValues?: Record<string, unknown>
 }
 
-export default function EventForm({ initialValues, eventId }: EventFormProps) {
+export default function EventForm({ initialValues, eventId, customFields, initialCustomValues }: EventFormProps) {
   const router = useRouter()
   const toast = useToast()
   const [form, setForm] = useState<EventFormData>({ ...defaultValues, ...initialValues })
+  const [customValues, setCustomValues] = useState<Record<string, unknown>>(initialCustomValues ?? {})
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const setCustomValue = (id: string, value: unknown) =>
+    setCustomValues((prev) => ({ ...prev, [id]: value }))
 
   const set = (key: keyof EventFormData, value: unknown) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -141,6 +149,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       ...form,
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+      custom_fields: customFields && customFields.length > 0 ? customValues : {},
       checkin_config: {
         ...(form.checkin_whatsapp_url    ? { whatsapp_url:    form.checkin_whatsapp_url }    : {}),
         ...(form.checkin_welcome_message ? { welcome_message: form.checkin_welcome_message } : {}),
@@ -309,6 +318,26 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         </div>
       </div>
 
+      {/* Custom fields (from org template) */}
+      {customFields && customFields.length > 0 && (
+        <div className={sectionClass}>
+          <h2 className="text-base font-semibold text-gray-900">Custom Fields</h2>
+          <p className="text-xs text-gray-500 -mt-2">
+            Fields from your organization&apos;s event template. Edit the template in Settings.
+          </p>
+          {customFields.map((field) => (
+            <CustomFieldRow
+              key={field.id}
+              field={field}
+              value={(customValues[field.id] ?? '') as string}
+              onChange={(v) => setCustomValue(field.id, v)}
+              inputClass={inputClass}
+              labelClass={labelClass}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Speakers */}
       <div className={sectionClass}>
         <div className="flex items-center justify-between">
@@ -462,7 +491,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
           className="px-6 py-2 text-sm font-medium text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
         >
           {generating
-            ? '✨ Generating content…'
+            ? 'Generating content…'
             : saving
               ? 'Saving…'
               : eventId
@@ -471,5 +500,63 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         </button>
       </div>
     </form>
+  )
+}
+
+interface CustomFieldRowProps {
+  field: TemplateField
+  value: string
+  onChange: (v: string) => void
+  inputClass: string
+  labelClass: string
+}
+
+function CustomFieldRow({ field, value, onChange, inputClass, labelClass }: CustomFieldRowProps) {
+  let input: React.ReactNode
+  if (field.type === 'textarea') {
+    input = (
+      <textarea
+        required={field.required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={field.placeholder}
+        rows={3}
+        className={inputClass}
+      />
+    )
+  } else if (field.type === 'select') {
+    input = (
+      <select
+        required={field.required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+      >
+        <option value="">Select…</option>
+        {(field.options ?? []).map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    )
+  } else {
+    input = (
+      <input
+        type={field.type}
+        required={field.required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={field.placeholder}
+        className={inputClass}
+      />
+    )
+  }
+  return (
+    <div>
+      <label className={labelClass}>
+        {field.label}{field.required ? ' *' : ''}
+      </label>
+      {input}
+      {field.help && <p className="text-xs text-gray-400 mt-1">{field.help}</p>}
+    </div>
   )
 }
