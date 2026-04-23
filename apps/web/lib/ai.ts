@@ -134,7 +134,13 @@ Max Capacity: ${event.max_capacity || 'Open'}${customLines}
 </event_context>`
 }
 
-const SYSTEM_PROMPT_PREFIX = `You are an expert content writer for volunteer-led community organizations — alumni networks, professional associations, and clubs. Your writing is warm, specific, and human. You never use generic filler phrases like "Don't miss out!" or "Join us for an exciting event." Every piece of content you write sounds like it was crafted by a real person who cares deeply about their community.`
+const SYSTEM_PROMPT_PREFIX = `You are an expert content writer for volunteer-led community organizations (alumni networks, professional associations, clubs). Your writing is warm, specific, and human. You never use generic filler phrases like "Don't miss out!" or "Join us for an exciting event." Every piece of content you write sounds like it was crafted by a real person who cares deeply about their community.
+
+STYLE RULES (strictly enforced):
+- NEVER use em-dashes (—) or en-dashes (–). Use commas, periods, parentheses, or "and"/"but"/"or" instead.
+- NEVER use the phrase "not only… but also".
+- Prefer simple punctuation: commas, periods, colons.
+- Avoid AI-giveaway phrases: "delve into", "in today's fast-paced world", "embark on a journey", "leverage", "utilize", "unlock".`
 
 export interface GeneratedChannel {
   channel: Channel
