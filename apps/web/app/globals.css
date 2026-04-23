@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf7;  /* warm off-white with a green-cream tint */
+  --foreground: #1c1f1a;
 }
 
 @theme inline {
@@ -10,6 +10,34 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Sage — muted, earthy green (primary brand color) */
+  --color-sage-50:  #f3f7f0;
+  --color-sage-100: #e3ecdd;
+  --color-sage-200: #c6d8bb;
+  --color-sage-300: #a3bf93;
+  --color-sage-400: #85a76f;
+  --color-sage-500: #6a8d55;
+  --color-sage-600: #547143;
+  --color-sage-700: #445a38;
+  --color-sage-800: #374830;
+  --color-sage-900: #2e3c2a;
+
+  /* Pastel accent palette */
+  --color-peach-50:    #fff4ec;
+  --color-peach-100:   #ffe4d0;
+  --color-peach-500:   #f0a780;
+  --color-peach-700:   #b86d44;
+
+  --color-lavender-50:  #f5f3fb;
+  --color-lavender-100: #e6e0f2;
+  --color-lavender-500: #a897d0;
+  --color-lavender-700: #6e5b9b;
+
+  --color-butter-50:  #fff8e1;
+  --color-butter-100: #fdedb7;
+  --color-butter-500: #e7c26a;
+  --color-butter-700: #8f6b1e;
 }
 
 body {

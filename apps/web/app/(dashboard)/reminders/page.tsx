@@ -70,7 +70,7 @@ function RemindersContent() {
     await fetchReminders()
   }
 
-  const inputClass = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-sage-500'
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -78,7 +78,7 @@ function RemindersContent() {
         <h1 className="text-2xl font-bold text-gray-900">
           Reminders {eventId && <span className="text-gray-400 text-lg">· Event</span>}
         </h1>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <button onClick={() => setShowForm(true)} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700">
           + Add Reminder
         </button>
       </div>
@@ -97,7 +97,7 @@ function RemindersContent() {
       </div>
 
       {showForm && (
-        <form onSubmit={addReminder} className="bg-white border border-indigo-200 rounded-xl p-5 mb-6 space-y-3">
+        <form onSubmit={addReminder} className="bg-white border border-sage-200 rounded-xl p-5 mb-6 space-y-3">
           <h3 className="font-medium text-gray-900">Add Reminder</h3>
           <input required placeholder="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} />
           <textarea placeholder="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className={inputClass} />
@@ -110,10 +110,10 @@ function RemindersContent() {
             </select>
           </div>
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 disabled:opacity-50">
               {saving ? 'Saving…' : 'Add'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">Cancel</button>
           </div>
         </form>
       )}
@@ -134,7 +134,7 @@ function RemindersContent() {
                 className={`mt-0.5 h-5 w-5 rounded-full border-2 flex-shrink-0 transition-colors ${
                   r.status === 'done'
                     ? 'bg-green-500 border-green-500'
-                    : 'border-gray-300 hover:border-indigo-500'
+                    : 'border-gray-300 hover:border-sage-500'
                 }`}
               >
                 {r.status === 'done' && <span className="text-white text-xs flex items-center justify-center">✓</span>}
@@ -146,7 +146,7 @@ function RemindersContent() {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[r.priority]}`}>{r.priority}</span>
                   {r.event_name && <span className="text-xs text-gray-400">📅 {r.event_name}</span>}
                   {r.assigned_to_name && <span className="text-xs text-gray-400">👤 {r.assigned_to_name}</span>}
-                  {r.ai_generated && <span className="text-xs text-indigo-400">✨ AI</span>}
+                  {r.ai_generated && <span className="text-xs text-sage-400">✨ AI</span>}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">

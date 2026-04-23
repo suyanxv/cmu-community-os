@@ -65,7 +65,7 @@ export default function RsvpPage() {
     window.location.href = `/api/events/${eventId}/rsvps/export`
   }
 
-  const inputClass = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-sage-500'
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -77,10 +77,10 @@ export default function RsvpPage() {
           <h1 className="text-2xl font-bold text-gray-900">RSVPs</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={exportCsv} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button onClick={exportCsv} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">
             Export CSV
           </button>
-          <button onClick={() => setShowForm(true)} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <button onClick={() => setShowForm(true)} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700">
             + Add RSVP
           </button>
         </div>
@@ -92,7 +92,7 @@ export default function RsvpPage() {
           { label: 'Confirmed', value: summary.confirmed, color: 'text-green-700' },
           { label: 'Waitlist', value: summary.waitlist, color: 'text-yellow-700' },
           { label: 'Cancelled', value: summary.cancelled, color: 'text-red-700' },
-          { label: 'Total Guests', value: summary.total_guests, color: 'text-indigo-700' },
+          { label: 'Total Guests', value: summary.total_guests, color: 'text-sage-700' },
         ].map((s) => (
           <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-4 text-center">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -103,7 +103,7 @@ export default function RsvpPage() {
 
       {/* Add RSVP form */}
       {showForm && (
-        <form onSubmit={addRsvp} className="bg-white border border-indigo-200 rounded-xl p-5 mb-6 space-y-3">
+        <form onSubmit={addRsvp} className="bg-white border border-sage-200 rounded-xl p-5 mb-6 space-y-3">
           <h3 className="font-medium text-gray-900">Add RSVP</h3>
           <div className="grid grid-cols-2 gap-3">
             <input required placeholder="Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputClass} />
@@ -119,10 +119,10 @@ export default function RsvpPage() {
           </div>
           <input placeholder="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={inputClass} />
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 disabled:opacity-50">
               {saving ? 'Saving…' : 'Add RSVP'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">
               Cancel
             </button>
           </div>
@@ -139,7 +139,7 @@ export default function RsvpPage() {
       ) : (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-stone-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Email</th>
@@ -150,7 +150,7 @@ export default function RsvpPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {rsvps.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
+                <tr key={r.id} className="hover:bg-stone-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
                   <td className="px-4 py-3 text-gray-500">{r.email ?? '-'}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{r.guest_count}</td>

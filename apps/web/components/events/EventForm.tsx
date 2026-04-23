@@ -170,7 +170,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
     router.push(`/events/${savedId}`)
   }
 
-  const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+  const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent'
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
   const sectionClass = 'bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4'
 
@@ -236,7 +236,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
               { id: 'virtual' as const, label: 'Virtual' },
               { id: 'hybrid' as const, label: 'Hybrid' },
             ].map((m) => (
-              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.event_mode === m.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.event_mode === m.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 <input type="radio" name="event_mode" value={m.id} checked={form.event_mode === m.id} onChange={() => { set('event_mode', m.id); set('is_virtual', m.id === 'virtual') }} className="sr-only" />
                 {m.label}
               </label>
@@ -292,7 +292,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       <div className={sectionClass}>
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">Speakers / Guests</h2>
-          <button type="button" onClick={addSpeaker} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          <button type="button" onClick={addSpeaker} className="text-sm text-sage-600 hover:text-sage-700 font-medium">
             + Add Speaker
           </button>
         </div>
@@ -315,14 +315,14 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       <div className={sectionClass}>
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">Sponsors</h2>
-          <button type="button" onClick={addSponsor} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          <button type="button" onClick={addSponsor} className="text-sm text-sage-600 hover:text-sage-700 font-medium">
             + Add Sponsor
           </button>
         </div>
         {form.sponsors.map((s, i) => (
           <div key={i} className="flex items-center gap-3">
             <input type="text" placeholder="Company Name" value={s.name} onChange={(e) => updateSponsor(i, 'name', e.target.value)} className={inputClass} />
-            <input type="text" placeholder="Tier (Gold, Silver…)" value={s.tier} onChange={(e) => updateSponsor(i, 'tier', e.target.value)} className="w-40 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input type="text" placeholder="Tier (Gold, Silver…)" value={s.tier} onChange={(e) => updateSponsor(i, 'tier', e.target.value)} className="w-40 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500" />
             <button type="button" onClick={() => removeSponsor(i)} className="text-red-500 hover:text-red-700 text-sm">✕</button>
           </div>
         ))}
@@ -335,7 +335,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
           <label className={labelClass}>Tone</label>
           <div className="flex gap-3">
             {TONE_OPTIONS.map((t) => (
-              <label key={t.id} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border text-sm ${form.tone === t.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
+              <label key={t.id} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border text-sm ${form.tone === t.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
                 <input type="radio" name="tone" value={t.id} checked={form.tone === t.id} onChange={() => set('tone', t.id)} className="sr-only" />
                 {t.label}
               </label>
@@ -350,7 +350,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
           <label className={labelClass}>Generate content for</label>
           <div className="flex flex-wrap gap-2 mt-1">
             {CHANNEL_OPTIONS.map((ch) => (
-              <label key={ch.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.channels.includes(ch.id) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <label key={ch.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.channels.includes(ch.id) ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 <input type="checkbox" checked={form.channels.includes(ch.id)} onChange={() => toggleChannel(ch.id)} className="sr-only" />
                 {ch.label}
               </label>
@@ -374,7 +374,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         </div>
         <div>
           <label className={labelClass}>Max Capacity</label>
-          <input type="number" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="100" className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="number" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="100" className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500" />
         </div>
       </div>
 
@@ -395,14 +395,14 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-stone-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving || generating}
-          className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          className="px-6 py-2 text-sm font-medium text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
         >
           {generating
             ? '✨ Generating content…'

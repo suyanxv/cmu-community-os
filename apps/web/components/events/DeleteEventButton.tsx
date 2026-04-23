@@ -48,7 +48,7 @@ export default function DeleteEventButton({ eventId, eventName }: { eventId: str
           <button
             onClick={() => setConfirming(false)}
             disabled={deleting}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50 disabled:opacity-50"
           >
             Cancel
           </button>

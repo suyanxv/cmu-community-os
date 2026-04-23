@@ -30,7 +30,7 @@ export default async function EventsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Events</h1>
         <Link
           href="/events/new"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+          className="bg-sage-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sage-700 transition-colors"
         >
           + New Event
         </Link>
@@ -43,7 +43,7 @@ export default async function EventsPage() {
           <p className="text-gray-500 mt-1 mb-6">Create your first event to get started</p>
           <Link
             href="/events/new"
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
+            className="bg-sage-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-sage-700"
           >
             Create Event
           </Link>
@@ -54,7 +54,7 @@ export default async function EventsPage() {
             <Link
               key={event.id}
               href={`/events/${event.id}`}
-              className="block bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition-all"
+              className="block bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all"
             >
               <div className="flex items-start justify-between">
                 <div>

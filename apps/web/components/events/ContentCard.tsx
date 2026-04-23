@@ -52,7 +52,7 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-stone-50">
         <div className="flex items-center gap-2">
           <span>{info.icon}</span>
           <span className="font-medium text-gray-900 text-sm">{info.label}</span>
@@ -76,7 +76,7 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
             className={`text-xs px-3 py-1 rounded font-medium transition-colors ${
               copied
                 ? 'bg-green-100 text-green-700'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                : 'bg-sage-600 text-white hover:bg-sage-700'
             }`}
           >
             {copied ? '✓ Copied!' : 'Copy'}

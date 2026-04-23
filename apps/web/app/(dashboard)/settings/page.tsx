@@ -110,7 +110,7 @@ export default function SettingsPage() {
   • https://lu.ma/create-event
   • Event Title, Expected attendance, Dress code (Casual/Formal), Food preferences, Parking notes…
   • "We collect: which alumni class, chapter chapter budget, is this free/paid, dress code"`}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
               />
             </div>
 
@@ -119,7 +119,7 @@ export default function SettingsPage() {
             <button
               onClick={parseInput}
               disabled={parsing || !input.trim()}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+              className="bg-sage-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sage-700 disabled:opacity-50"
             >
               {parsing ? '⟳ Parsing with AI…' : schema && schema.length > 0 ? 'Replace Template' : 'Parse & Preview'}
             </button>
@@ -128,8 +128,8 @@ export default function SettingsPage() {
 
         {/* Preview parsed fields */}
         {pendingSchema && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
-            <p className="text-sm font-medium text-indigo-800">Preview — {pendingSchema.length} fields extracted:</p>
+          <div className="bg-sage-50 border border-sage-200 rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-sage-800">Preview — {pendingSchema.length} fields extracted:</p>
             <div className="space-y-1">
               {pendingSchema.map((f) => (
                 <div key={f.id} className="text-sm text-gray-700">
@@ -144,13 +144,13 @@ export default function SettingsPage() {
               <button
                 onClick={saveSchema}
                 disabled={saving}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                className="bg-sage-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sage-700 disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Use This Template'}
               </button>
               <button
                 onClick={() => setPendingSchema(null)}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
               >
                 Cancel
               </button>

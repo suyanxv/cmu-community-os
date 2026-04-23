@@ -67,7 +67,7 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500'
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
   const sectionClass = 'bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4'
 
@@ -226,7 +226,7 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
               { id: 'virtual' as const, label: 'Virtual' },
               { id: 'hybrid' as const, label: 'Hybrid' },
             ].map((m) => (
-              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.event_mode === m.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600'}`}>
+              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.event_mode === m.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600'}`}>
                 <input type="radio" checked={core.event_mode === m.id} onChange={() => setCoreField('event_mode', m.id)} className="sr-only" />
                 {m.label}
               </label>
@@ -258,7 +258,7 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
           <label className={labelClass}>Tone</label>
           <div className="flex flex-wrap gap-2">
             {TONE_OPTIONS.map((t) => (
-              <label key={t.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.tone === t.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600'}`}>
+              <label key={t.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.tone === t.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600'}`}>
                 <input type="radio" checked={core.tone === t.id} onChange={() => setCoreField('tone', t.id)} className="sr-only" />
                 {t.label}
               </label>
@@ -269,7 +269,7 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
           <label className={labelClass}>Channels</label>
           <div className="flex flex-wrap gap-2">
             {CHANNEL_OPTIONS.map((ch) => (
-              <label key={ch.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.channels.includes(ch.id) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600'}`}>
+              <label key={ch.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.channels.includes(ch.id) ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600'}`}>
                 <input type="checkbox" checked={core.channels.includes(ch.id)} onChange={() => toggleChannel(ch.id)} className="sr-only" />
                 {ch.label}
               </label>
@@ -283,10 +283,10 @@ export default function DynamicEventForm({ schema, eventId, initialCore, initial
       </div>
 
       <div className="flex items-center justify-end gap-3 pb-8">
-        <button type="button" onClick={() => router.back()} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+        <button type="button" onClick={() => router.back()} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-stone-50">
           Cancel
         </button>
-        <button type="submit" disabled={saving || generating} className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+        <button type="submit" disabled={saving || generating} className="px-6 py-2 text-sm font-medium text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50">
           {generating
             ? '✨ Generating content…'
             : saving

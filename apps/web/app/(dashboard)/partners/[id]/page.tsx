@@ -117,10 +117,10 @@ export default function PartnerDetailPage() {
 
       {/* Contact info */}
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5 space-y-2">
-        {partner.email && <p className="text-sm text-gray-700">📧 <a href={`mailto:${partner.email}`} className="text-indigo-600 hover:underline">{partner.email}</a></p>}
+        {partner.email && <p className="text-sm text-gray-700">📧 <a href={`mailto:${partner.email}`} className="text-sage-600 hover:underline">{partner.email}</a></p>}
         {partner.phone && <p className="text-sm text-gray-700">📞 {partner.phone}</p>}
-        {partner.website && <p className="text-sm text-gray-700">🌐 <a href={partner.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{partner.website}</a></p>}
-        {partner.linkedin_url && <p className="text-sm text-gray-700">💼 <a href={partner.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">LinkedIn</a></p>}
+        {partner.website && <p className="text-sm text-gray-700">🌐 <a href={partner.website} target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline">{partner.website}</a></p>}
+        {partner.linkedin_url && <p className="text-sm text-gray-700">💼 <a href={partner.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline">LinkedIn</a></p>}
         {partner.notes && <p className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-100">{partner.notes}</p>}
       </div>
 
@@ -131,7 +131,7 @@ export default function PartnerDetailPage() {
           <div className="space-y-2">
             {partner.events.map((ev) => (
               <div key={ev.id} className="flex items-center justify-between text-sm">
-                <Link href={`/events/${ev.id}`} className="text-indigo-600 hover:underline">{ev.event_name}</Link>
+                <Link href={`/events/${ev.id}`} className="text-sage-600 hover:underline">{ev.event_name}</Link>
                 <div className="flex items-center gap-2 text-gray-400">
                   {ev.role && <span>{ev.role}</span>}
                   <span>{new Date(ev.event_date).toLocaleDateString()}</span>
@@ -147,7 +147,7 @@ export default function PartnerDetailPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-700">Communication History</h2>
-          <button onClick={() => setShowNoteForm(true)} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+          <button onClick={() => setShowNoteForm(true)} className="text-xs text-sage-600 hover:text-sage-700 font-medium">
             + Add Note
           </button>
         </div>
@@ -160,13 +160,13 @@ export default function PartnerDetailPage() {
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               placeholder="Add a note about this partner…"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
             />
             <div className="flex gap-2">
-              <button type="submit" disabled={saving} className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+              <button type="submit" disabled={saving} className="px-3 py-1.5 text-xs bg-sage-600 text-white rounded-lg hover:bg-sage-700 disabled:opacity-50">
                 {saving ? 'Saving…' : 'Save Note'}
               </button>
-              <button type="button" onClick={() => setShowNoteForm(false)} className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setShowNoteForm(false)} className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-stone-50">Cancel</button>
             </div>
           </form>
         )}
@@ -179,7 +179,7 @@ export default function PartnerDetailPage() {
               <div key={c.id} className="border-l-2 border-gray-200 pl-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-gray-600 capitalize">{c.type}</span>
-                  {c.ai_drafted && <span className="text-xs text-indigo-400">✨ AI</span>}
+                  {c.ai_drafted && <span className="text-xs text-sage-400">✨ AI</span>}
                   {c.event_name && <span className="text-xs text-gray-400">· {c.event_name}</span>}
                   <span className="text-xs text-gray-400 ml-auto">{new Date(c.created_at).toLocaleDateString()}</span>
                 </div>

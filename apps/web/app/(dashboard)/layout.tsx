@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onClick={() => setMobileOpen(false)}
         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
           active
-            ? 'bg-indigo-50 text-indigo-700'
+            ? 'bg-sage-50 text-sage-700'
             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
         }`}
       >
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   })
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-stone-50">
 
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col shrink-0">
@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 className={`flex-1 flex flex-col items-center py-2 text-xs font-medium transition-colors ${
-                  active ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'
+                  active ? 'text-sage-600' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>

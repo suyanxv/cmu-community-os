@@ -101,7 +101,7 @@ export default function ContentPage() {
                   existing
                     ? 'border-green-200 bg-green-50 text-green-700'
                     : selectedChannels.includes(ch)
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      ? 'border-sage-500 bg-sage-50 text-sage-700'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
                 title={existing ? 'Already generated' : undefined}
@@ -116,7 +116,7 @@ export default function ContentPage() {
         <button
           onClick={() => generateContent(selectedChannels)}
           disabled={generating || selectedChannels.length === 0}
-          className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-sage-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-sage-700 disabled:opacity-50"
         >
           {generating ? '⟳ Generating…' : 'Generate Selected'}
         </button>

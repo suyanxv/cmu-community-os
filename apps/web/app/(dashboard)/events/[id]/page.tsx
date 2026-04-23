@@ -57,10 +57,10 @@ export default async function EventDetailPage({ params }: Params) {
         </div>
         <div className="flex gap-2 flex-wrap">
           <DeleteEventButton eventId={id} eventName={event.name} />
-          <Link href={`/events/${id}/edit`} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          <Link href={`/events/${id}/edit`} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">
             Edit
           </Link>
-          <Link href={`/events/${id}/content`} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <Link href={`/events/${id}/content`} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700">
             {hasContent ? 'View Content' : 'Add Content'}
           </Link>
         </div>
@@ -88,19 +88,19 @@ export default async function EventDetailPage({ params }: Params) {
 
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <Link href={`/events/${id}/content`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition-all">
+        <Link href={`/events/${id}/content`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
           <p className="text-lg mb-1">✍️</p>
           <p className="font-medium text-gray-900">Generated Content</p>
           <p className="text-sm text-gray-500 mt-1">
             {hasContent ? `${content.length} channels ready` : 'Not generated yet'}
           </p>
         </Link>
-        <Link href={`/events/${id}/rsvps`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition-all">
+        <Link href={`/events/${id}/rsvps`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
           <p className="text-lg mb-1">🎟️</p>
           <p className="font-medium text-gray-900">RSVP Management</p>
           <p className="text-sm text-gray-500 mt-1">{event.rsvp_count} confirmed</p>
         </Link>
-        <Link href={`/reminders?event_id=${id}`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition-all">
+        <Link href={`/reminders?event_id=${id}`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
           <p className="text-lg mb-1">🔔</p>
           <p className="font-medium text-gray-900">Reminders</p>
           <p className="text-sm text-gray-500 mt-1">View & manage tasks</p>
@@ -165,7 +165,7 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
         {event.location_address ? <DetailRow label="Address">{String(event.location_address)}</DetailRow> : null}
         {event.location_url ? (
           <DetailRow label={event.event_mode === 'virtual' ? 'Meeting Link' : 'Venue Link'}>
-            <a href={String(event.location_url)} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline break-all">
+            <a href={String(event.location_url)} target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline break-all">
               {String(event.location_url)}
             </a>
           </DetailRow>
@@ -199,7 +199,7 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
 
         {event.rsvp_link ? (
           <DetailRow label="RSVP Link">
-            <a href={String(event.rsvp_link)} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline break-all">
+            <a href={String(event.rsvp_link)} target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline break-all">
               {String(event.rsvp_link)}
             </a>
           </DetailRow>
