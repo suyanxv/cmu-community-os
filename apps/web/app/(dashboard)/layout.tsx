@@ -8,6 +8,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import {
   Home,
   CalendarDays,
+  Lightbulb,
   Users,
   UserCircle,
   Bell,
@@ -21,6 +22,7 @@ import {
 const navItems: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/dashboard', label: 'Home',      Icon: Home },
   { href: '/events',    label: 'Events',    Icon: CalendarDays },
+  { href: '/ideas',     label: 'Ideas',     Icon: Lightbulb },
   { href: '/partners',  label: 'Partners',  Icon: Users },
   { href: '/attendees', label: 'Attendees', Icon: UserCircle },
   { href: '/reminders', label: 'Reminders', Icon: Bell },
