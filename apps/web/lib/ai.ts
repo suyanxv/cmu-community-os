@@ -305,40 +305,83 @@ export interface TemplateField {
 export async function parseEventTemplate(input: string): Promise<TemplateField[]> {
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [
       {
         role: 'user',
-        content: `You are parsing a community organization's event intake form template into a structured field schema.
+        content: `You are parsing a community organization's event intake form into a structured field schema.
 
-The input below is either (a) a URL to an existing form (Google Forms, Luma, Eventbrite, etc.), (b) raw text copied from a form, or (c) a free-form description of what fields the organizer wants to collect.
+The INPUT below may be:
+(a) Raw HTML of a form page (may contain embedded JSON config like window.form_data or similar — look for these first, they describe the form precisely)
+(b) Plain text / bullet list of field names
+(c) A free-form description of what fields are needed
+(d) A URL with fetch error — in which case, return [] (empty array)
 
 INPUT:
-${input.slice(0, 8000)}
+${input.slice(0, 40000)}
 
 TASK:
-Extract a list of form fields. Return ONLY a JSON array of objects with this shape:
+Extract EVERY form field. Return ONLY a JSON array of objects:
 {
   "id": "snake_case_id",
-  "label": "Human Readable Label",
+  "label": "Human Readable Label (from the actual form)",
   "type": "text" | "textarea" | "date" | "time" | "email" | "url" | "number" | "select",
   "required": true | false,
-  "placeholder": "optional hint text",
+  "placeholder": "hint text if present in form",
   "options": ["opt1", "opt2"],
-  "help": "optional help text"
+  "help": "help/description text from form"
 }
 
-RULES:
-- Pick the most appropriate "type" — use "textarea" for multi-line things like descriptions/agendas
-- Use "select" + "options" for enums (dress code, tier, etc.)
-- Infer required fields (things like event name, date are usually required)
-- DO NOT include these — they are always in the core form: event name, event date, start time, end time, timezone, location, channels, tone
-- Only include CUSTOM fields unique to this organization
-- If the input is a URL you cannot resolve, make your best guess based on the organization context
-- Keep labels concise (under 50 chars)
-- Limit to 15 fields maximum
+TYPE MAPPING RULES:
+- HTML <input type="text"> / "short_text" / "text" column → "text"
+- <textarea> / "long-text" / "long_text" column → "textarea"
+- <input type="email"> / "email" column → "email"
+- <input type="date"> / "date" column → "date"
+- <input type="time"> → "time"
+- <input type="url"> / "link" column / URL field → "url"
+- <input type="number"> / "numeric" / fields asking for "count", "capacity", "attendance", "limit" → "number"
+- <select> / radio buttons / "color" column with labels / "dropdown" → "select" with options from labels
+- "timerange" / date range column → split into TWO fields: {id}_start (date) and {id}_end (date)
+- "file" / image upload → SKIP (not supported yet)
+- "location" → text
 
-Return ONLY the JSON array, no other text, no markdown fences.`,
+EXCLUSION RULES (these are already core fields in Quorum, DO NOT include them):
+- Event name / title → core "name"
+- Event date / start date → core "event_date"
+- End date → core "end_date"
+- Start time / end time → core "start_time" / "end_time"
+- Timezone → core
+- Virtual/in-person/hybrid → core "event_mode"
+- Promotional description → core "description"
+- Location venue name → core "location_name"
+- Location address → core "location_address"
+- Virtual meeting URL → core "location_url"
+- Registration deadline → core "rsvp_deadline"
+- Channels (WhatsApp, Email, etc.) → core "channels"
+- Tone → core "tone"
+
+INCLUDE (these are CUSTOM per-org fields):
+- Organizer name / contact info
+- Network / chapter / hosting group
+- Cost / price / fee
+- Maximum capacity / desired attendance / ticket limits
+- Sponsors / partners / co-hosts
+- Speaker roles / hosts
+- Accessibility / accommodation notes
+- Parking / transportation info
+- Venue website
+- Detailed program / agenda timing
+- Any other custom fields you find
+
+QUALITY RULES:
+- Use label text EXACTLY as it appears in the form (strip trailing colons)
+- Preserve required flag from form's "mandatory" field or asterisks
+- Include all select options (e.g., if there's a 40-city dropdown, include all 40)
+- Include help/description text when available
+- Limit to 30 fields maximum
+- If you can't find any form fields in the input, return []
+
+Return ONLY the JSON array, no other text, no markdown fences, no explanation.`,
       },
     ],
   })
