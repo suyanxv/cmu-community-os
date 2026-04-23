@@ -17,6 +17,7 @@ interface EventRow {
   location_name: string | null
   channels: string[]
   rsvp_count: number
+  max_capacity: number | null
   effective_end_date: string
 }
 
@@ -38,9 +39,9 @@ export default async function EventsPage() {
 
   const rows = await sql`
     SELECT
-      id, name, status, event_date, start_time, location_name, channels,
+      id, name, status, event_date, start_time, location_name, channels, max_capacity,
       COALESCE(end_date, event_date) AS effective_end_date,
-      (SELECT COUNT(*)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
+      (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
     FROM events
     WHERE org_id = ${orgId} AND status != 'archived'
     ORDER BY event_date DESC
@@ -125,13 +126,23 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
     : event.status === 'past'    ? 'bg-stone-200 text-stone-600'
     : 'bg-gray-100 text-gray-600'
 
+  const capacityPct = event.max_capacity && event.max_capacity > 0
+    ? Math.min(100, Math.round((event.rsvp_count / event.max_capacity) * 100))
+    : null
+
+  const barColor =
+    capacityPct === null ? ''
+    : capacityPct >= 100 ? 'bg-red-500'
+    : capacityPct >= 80  ? 'bg-butter-500'
+    : 'bg-sage-500'
+
   return (
     <Link
       href={`/events/${event.id}`}
       className={`block bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all ${dim ? 'opacity-75 hover:opacity-100' : ''}`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
           <p className="text-sm text-gray-500 mt-1">
             {new Date(event.event_date).toLocaleDateString('en-US', {
@@ -149,11 +160,23 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-sm text-gray-500">{event.rsvp_count} RSVP{event.rsvp_count === 1 ? '' : 's'}</span>
+        <div className="flex flex-col items-end gap-2 shrink-0">
           <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${statusStyle}`}>
             {event.status}
           </span>
+          {capacityPct !== null ? (
+            <div className="w-32">
+              <div className="flex items-baseline justify-between text-xs text-gray-500 mb-1">
+                <span className="font-medium text-gray-700">{event.rsvp_count}/{event.max_capacity}</span>
+                <span>{capacityPct}%</span>
+              </div>
+              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                <div className={`h-full ${barColor} transition-all`} style={{ width: `${capacityPct}%` }} />
+              </div>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-500">{event.rsvp_count} guest{event.rsvp_count === 1 ? '' : 's'}</span>
+          )}
         </div>
       </div>
     </Link>

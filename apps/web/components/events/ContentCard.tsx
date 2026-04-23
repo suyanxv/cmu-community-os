@@ -48,7 +48,14 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
     setRegenerating(false)
   }
 
-  const isOverLimit = info.limit && characterCount && characterCount > info.limit
+  const isOverLimit = !!(info.limit && characterCount && characterCount > info.limit)
+  const pct = info.limit && characterCount !== null ? (characterCount / info.limit) : null
+  const charColor =
+    pct === null ? 'text-gray-400'
+    : pct >= 1    ? 'text-red-600 font-medium'
+    : pct >= 0.9  ? 'text-red-500'
+    : pct >= 0.75 ? 'text-butter-700'
+    : 'text-sage-700'
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -60,7 +67,7 @@ export default function ContentCard({ contentId, eventId, channel, subjectLine, 
         </div>
         <div className="flex items-center gap-2">
           {characterCount !== null && (
-            <span className={`text-xs ${isOverLimit ? 'text-red-500' : 'text-gray-400'}`}>
+            <span className={`text-xs ${charColor}`} title={isOverLimit ? 'Over recommended limit' : ''}>
               {characterCount.toLocaleString()}{info.limit ? `/${info.limit}` : ''} chars
             </span>
           )}
