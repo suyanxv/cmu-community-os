@@ -27,7 +27,7 @@ const TABS: { id: FilterTab; label: string }[] = [
 
 export default function EventsList({ events }: { events: EventRow[] }) {
   const [query, setQuery] = useState('')
-  const [tab, setTab] = useState<FilterTab>('upcoming')
+  const [tab, setTab] = useState<FilterTab>('all')
   const today = new Date().toISOString().slice(0, 10)
 
   const filtered = useMemo(() => {
