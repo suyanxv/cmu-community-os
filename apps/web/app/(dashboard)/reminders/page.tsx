@@ -15,9 +15,16 @@ interface Reminder {
   status: 'pending' | 'done' | 'snoozed'
   priority: 'high' | 'medium' | 'low'
   ai_generated: boolean
+  assigned_to: string | null
   assigned_to_name: string | null
   event_name: string | null
   event_id: string | null
+}
+
+interface MemberOption {
+  user_id: string
+  full_name: string | null
+  email: string
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -33,18 +40,23 @@ function RemindersContent() {
 
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [events, setEvents] = useState<Array<{ id: string; name: string; event_date: string; status: string }>>([])
+  const [members, setMembers] = useState<MemberOption[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '' })
+  const [form, setForm] = useState({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '', assigned_to: '' })
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState<'all' | 'pending' | 'done'>('pending')
   const [query, setQuery] = useState('')
 
-  // Fetch events for the dropdown once
+  // Fetch events + members for dropdowns once
   useEffect(() => {
     fetch('/api/events?limit=100')
       .then((r) => r.json())
       .then((d) => setEvents(d.data ?? []))
+      .catch(() => {})
+    fetch('/api/members')
+      .then((r) => r.json())
+      .then((d) => setMembers(d.data ?? []))
       .catch(() => {})
   }, [])
 
@@ -77,17 +89,35 @@ function RemindersContent() {
     const res = await fetch('/api/reminders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, event_id: form.event_id || null }),
+      body: JSON.stringify({
+        ...form,
+        event_id: form.event_id || null,
+        assigned_to: form.assigned_to || null,
+      }),
     })
     if (res.ok) {
       toast.success('Reminder added')
-      setForm({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '' })
+      setForm({ title: '', description: '', due_date: '', priority: 'medium', event_id: eventId ?? '', assigned_to: '' })
       setShowForm(false)
     } else {
       const data = await res.json().catch(() => ({}))
       toast.error(data.error ?? 'Failed to add reminder')
     }
     setSaving(false)
+    await fetchReminders()
+  }
+
+  const reassign = async (id: string, newUserId: string | null) => {
+    const res = await fetch(`/api/reminders/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigned_to: newUserId }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to update assignment')
+      return
+    }
     await fetchReminders()
   }
 
@@ -165,6 +195,21 @@ function RemindersContent() {
               </select>
             </div>
           </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Assigned to (optional)</label>
+            <select
+              value={form.assigned_to}
+              onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
+              className={inputClass}
+            >
+              <option value="">— Unassigned —</option>
+              {members.map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.full_name ?? m.email}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 disabled:opacity-50">
               {saving ? 'Saving…' : 'Add'}
@@ -180,19 +225,23 @@ function RemindersContent() {
         query={query}
         filter={filter}
         markDone={markDone}
+        members={members}
+        reassign={reassign}
       />
     </div>
   )
 }
 
 function ReminderList({
-  reminders, loading, query, filter, markDone,
+  reminders, loading, query, filter, markDone, members, reassign,
 }: {
   reminders: Reminder[]
   loading: boolean
   query: string
   filter: 'all' | 'pending' | 'done'
   markDone: (id: string, title: string) => void
+  members: MemberOption[]
+  reassign: (id: string, userId: string | null) => void
 }) {
   if (loading) return <CardListSkeleton count={4} />
   if (reminders.length === 0) return (
@@ -243,11 +292,22 @@ function ReminderList({
                   <CalendarDays className="w-3 h-3" strokeWidth={1.75} /> {r.event_name}
                 </span>
               )}
-              {r.assigned_to_name && (
-                <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                  <User className="w-3 h-3" strokeWidth={1.75} /> {r.assigned_to_name}
-                </span>
-              )}
+              <label className="inline-flex items-center gap-1 text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+                <User className="w-3 h-3" strokeWidth={1.75} />
+                <select
+                  value={r.assigned_to ?? ''}
+                  onChange={(e) => reassign(r.id, e.target.value || null)}
+                  className="bg-transparent border-0 focus:outline-none text-xs cursor-pointer hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <option value="">Unassigned</option>
+                  {members.map((m) => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.full_name ?? m.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {r.ai_generated && (
                 <span className="inline-flex items-center gap-1 text-xs text-sage-600">
                   <Sparkles className="w-3 h-3" strokeWidth={1.75} /> AI
