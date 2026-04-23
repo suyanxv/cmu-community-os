@@ -143,7 +143,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
 
   const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
-  const sectionClass = 'bg-white rounded-xl border border-gray-200 p-6 space-y-4'
+  const sectionClass = 'bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -167,7 +167,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
             className={inputClass}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Date *</label>
             <input type="date" required value={form.event_date} onChange={(e) => set('event_date', e.target.value)} className={inputClass} />
@@ -179,7 +179,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Start Time *</label>
             <input type="time" required value={form.start_time} onChange={(e) => set('start_time', e.target.value)} className={inputClass} />
@@ -261,7 +261,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
               <span className="text-sm font-medium text-gray-700">Speaker {i + 1}</span>
               <button type="button" onClick={() => removeSpeaker(i)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input type="text" placeholder="Full Name *" value={s.name} onChange={(e) => updateSpeaker(i, 'name', e.target.value)} className={inputClass} />
               <input type="text" placeholder="Title / Role" value={s.title} onChange={(e) => updateSpeaker(i, 'title', e.target.value)} className={inputClass} />
             </div>
@@ -321,7 +321,7 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       {/* RSVP */}
       <div className={sectionClass}>
         <h2 className="text-base font-semibold text-gray-900">RSVP</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>RSVP Link</label>
             <input type="url" value={form.rsvp_link} onChange={(e) => set('rsvp_link', e.target.value)} placeholder="https://lu.ma/your-event" className={inputClass} />
