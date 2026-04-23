@@ -54,6 +54,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       {
         name: event.name,
         event_date: event.event_date,
+        end_date: event.end_date,
         start_time: event.start_time,
         end_time: event.end_time,
         timezone: event.timezone,
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         location_address: event.location_address,
         location_url: event.location_url,
         is_virtual: event.is_virtual,
+        event_mode: event.event_mode,
         description: event.description,
         speakers: event.speakers,
         agenda: event.agenda,

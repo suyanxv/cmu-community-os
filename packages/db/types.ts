@@ -42,6 +42,7 @@ export interface Sponsor {
 
 export type EventStatus = 'draft' | 'published' | 'past' | 'archived'
 export type EventTone = 'professional-warm' | 'casual' | 'formal'
+export type EventMode = 'in_person' | 'virtual' | 'hybrid'
 export type Channel = 'whatsapp' | 'email' | 'instagram' | 'linkedin' | 'luma'
 
 export interface Event {
@@ -51,6 +52,7 @@ export interface Event {
   name: string
   status: EventStatus
   event_date: string
+  end_date: string | null
   start_time: string
   end_time: string | null
   timezone: string
@@ -58,6 +60,7 @@ export interface Event {
   location_address: string | null
   location_url: string | null
   is_virtual: boolean
+  event_mode: EventMode
   description: string | null
   speakers: Speaker[] | null
   agenda: string | null

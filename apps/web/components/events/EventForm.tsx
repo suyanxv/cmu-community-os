@@ -9,6 +9,7 @@ type Sponsor = { name: string; tier: string }
 interface EventFormData {
   name: string
   event_date: string
+  end_date: string
   start_time: string
   end_time: string
   timezone: string
@@ -16,6 +17,7 @@ interface EventFormData {
   location_address: string
   location_url: string
   is_virtual: boolean
+  event_mode: 'in_person' | 'virtual' | 'hybrid'
   description: string
   speakers: Speaker[]
   agenda: string
@@ -56,6 +58,7 @@ const TIMEZONE_OPTIONS = [
 const defaultValues: EventFormData = {
   name: '',
   event_date: '',
+  end_date: '',
   start_time: '',
   end_time: '',
   timezone: 'America/Los_Angeles',
@@ -63,6 +66,7 @@ const defaultValues: EventFormData = {
   location_address: '',
   location_url: '',
   is_virtual: false,
+  event_mode: 'in_person',
   description: '',
   speakers: [],
   agenda: '',
@@ -169,15 +173,20 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Date *</label>
+            <label className={labelClass}>Start Date *</label>
             <input type="date" required value={form.event_date} onChange={(e) => set('event_date', e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Timezone</label>
-            <select value={form.timezone} onChange={(e) => set('timezone', e.target.value)} className={inputClass}>
-              {TIMEZONE_OPTIONS.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
+            <label className={labelClass}>End Date</label>
+            <input type="date" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} className={inputClass} />
+            <p className="text-xs text-gray-400 mt-1">Leave blank for single-day events</p>
           </div>
+        </div>
+        <div>
+          <label className={labelClass}>Timezone</label>
+          <select value={form.timezone} onChange={(e) => set('timezone', e.target.value)} className={inputClass}>
+            {TIMEZONE_OPTIONS.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+          </select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -194,17 +203,22 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
       {/* Location */}
       <div className={sectionClass}>
         <h2 className="text-base font-semibold text-gray-900">Location</h2>
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="is_virtual"
-            checked={form.is_virtual}
-            onChange={(e) => set('is_virtual', e.target.checked)}
-            className="h-4 w-4 text-indigo-600 rounded"
-          />
-          <label htmlFor="is_virtual" className="text-sm text-gray-700">Virtual event</label>
+        <div>
+          <label className={labelClass}>Event Mode</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'in_person' as const, label: 'In-Person' },
+              { id: 'virtual' as const, label: 'Virtual' },
+              { id: 'hybrid' as const, label: 'Hybrid' },
+            ].map((m) => (
+              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.event_mode === m.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                <input type="radio" name="event_mode" value={m.id} checked={form.event_mode === m.id} onChange={() => { set('event_mode', m.id); set('is_virtual', m.id === 'virtual') }} className="sr-only" />
+                {m.label}
+              </label>
+            ))}
+          </div>
         </div>
-        {!form.is_virtual && (
+        {form.event_mode !== 'virtual' && (
           <>
             <div>
               <label className={labelClass}>Venue Name</label>
@@ -217,7 +231,9 @@ export default function EventForm({ initialValues, eventId }: EventFormProps) {
           </>
         )}
         <div>
-          <label className={labelClass}>{form.is_virtual ? 'Meeting Link' : 'Google Maps / Venue URL'}</label>
+          <label className={labelClass}>
+            {form.event_mode === 'virtual' ? 'Meeting Link' : form.event_mode === 'hybrid' ? 'Virtual Attendance Link' : 'Google Maps / Venue URL'}
+          </label>
           <input type="url" value={form.location_url} onChange={(e) => set('location_url', e.target.value)} placeholder="https://" className={inputClass} />
         </div>
       </div>

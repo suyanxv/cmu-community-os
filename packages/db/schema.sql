@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS events (
   status              TEXT NOT NULL DEFAULT 'draft',
 
   event_date          DATE NOT NULL,
+  end_date            DATE,
   start_time          TIME,
   end_time            TIME,
   timezone            TEXT NOT NULL DEFAULT 'America/Los_Angeles',
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS events (
   location_address    TEXT,
   location_url        TEXT,
   is_virtual          BOOLEAN NOT NULL DEFAULT FALSE,
+  event_mode          TEXT NOT NULL DEFAULT 'in_person',  -- 'in_person' | 'virtual' | 'hybrid'
 
   description         TEXT,
   speakers            JSONB,

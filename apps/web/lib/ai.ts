@@ -71,6 +71,7 @@ Requirements:
 export interface EventContext {
   name: string
   event_date: string
+  end_date?: string | null
   start_time: string
   end_time?: string | null
   timezone: string
@@ -78,6 +79,7 @@ export interface EventContext {
   location_address?: string | null
   location_url?: string | null
   is_virtual: boolean
+  event_mode?: 'in_person' | 'virtual' | 'hybrid'
   description?: string | null
   speakers?: Array<{ name: string; title?: string; bio?: string }> | null
   agenda?: string | null
@@ -107,14 +109,19 @@ function buildEventContextXml(event: EventContext): string {
         .join('\n')
     : ''
 
+  const modeLabel = event.event_mode === 'virtual' ? 'Virtual' : event.event_mode === 'hybrid' ? 'Hybrid (in-person + virtual)' : 'In-Person'
+  const dateRange = event.end_date && event.end_date !== event.event_date
+    ? `${event.event_date} – ${event.end_date}`
+    : event.event_date
+
   return `<event_context>
 Organization: ${event.org_name}
 Event Name: ${event.name}
-Date: ${event.event_date}
+Date: ${dateRange}
 Time: ${event.start_time}${event.end_time ? ` – ${event.end_time}` : ''} ${event.timezone}
-Location: ${event.is_virtual ? 'Virtual' : [event.location_name, event.location_address].filter(Boolean).join(', ') || 'TBD'}
+Location: ${event.event_mode === 'virtual' ? 'Virtual' : [event.location_name, event.location_address].filter(Boolean).join(', ') || 'TBD'}
 Location URL: ${event.location_url || 'N/A'}
-Virtual: ${event.is_virtual ? 'Yes' : 'No'}
+Event Mode: ${modeLabel}
 Description: ${event.description || 'N/A'}
 Speakers / Guests: ${speakers}
 Agenda: ${event.agenda || 'N/A'}

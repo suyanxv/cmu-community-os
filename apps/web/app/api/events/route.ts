@@ -8,6 +8,7 @@ import { errorResponse } from '@/lib/errors'
 const CreateEventSchema = z.object({
   name: z.string().min(1),
   event_date: z.string().min(1),
+  end_date: z.string().transform(v => v || null).nullable().optional(),
   start_time: z.string().transform(v => v || null).nullable(),
   end_time: z.string().transform(v => v || null).nullable(),
   timezone: z.string().default('America/Los_Angeles'),
@@ -15,6 +16,7 @@ const CreateEventSchema = z.object({
   location_address: z.string().transform(v => v || null).nullable(),
   location_url: z.string().transform(v => v || null).nullable(),
   is_virtual: z.boolean().default(false),
+  event_mode: z.enum(['in_person', 'virtual', 'hybrid']).default('in_person'),
   description: z.string().transform(v => v || null).nullable(),
   speakers: z.array(z.object({ name: z.string(), title: z.string().optional(), bio: z.string().optional() })).optional().nullable(),
   agenda: z.string().transform(v => v || null).nullable(),
@@ -64,16 +66,16 @@ export async function POST(req: NextRequest) {
 
     const rows = await sql`
       INSERT INTO events (
-        org_id, created_by, name, event_date, start_time, end_time, timezone,
-        location_name, location_address, location_url, is_virtual,
+        org_id, created_by, name, event_date, end_date, start_time, end_time, timezone,
+        location_name, location_address, location_url, is_virtual, event_mode,
         description, speakers, agenda, sponsors,
         tone, target_audience, channels, rsvp_link, rsvp_deadline, max_capacity,
         tags, notes, custom_fields
       ) VALUES (
-        ${ctx.orgId}, ${ctx.userId}, ${data.name}, ${data.event_date}, ${data.start_time},
-        ${data.end_time ?? null}, ${data.timezone},
+        ${ctx.orgId}, ${ctx.userId}, ${data.name}, ${data.event_date}, ${data.end_date ?? null},
+        ${data.start_time}, ${data.end_time ?? null}, ${data.timezone},
         ${data.location_name ?? null}, ${data.location_address ?? null}, ${data.location_url ?? null},
-        ${data.is_virtual},
+        ${data.is_virtual}, ${data.event_mode},
         ${data.description ?? null},
         ${data.speakers ? JSON.stringify(data.speakers) : null},
         ${data.agenda ?? null},

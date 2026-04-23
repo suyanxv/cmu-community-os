@@ -11,9 +11,11 @@ interface DynamicEventFormProps {
 type CoreValues = {
   name: string
   event_date: string
+  end_date: string
   start_time: string
   end_time: string
   timezone: string
+  event_mode: 'in_person' | 'virtual' | 'hybrid'
   tone: string
   channels: string[]
   rsvp_link: string
@@ -47,9 +49,11 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
   const [core, setCore] = useState<CoreValues>({
     name: '',
     event_date: '',
+    end_date: '',
     start_time: '',
     end_time: '',
     timezone: 'America/Los_Angeles',
+    event_mode: 'in_person',
     tone: 'professional-warm',
     channels: ['whatsapp', 'email'],
     rsvp_link: '',
@@ -163,14 +167,12 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Date *</label>
+            <label className={labelClass}>Start Date *</label>
             <input type="date" required value={core.event_date} onChange={(e) => setCoreField('event_date', e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Timezone</label>
-            <select value={core.timezone} onChange={(e) => setCoreField('timezone', e.target.value)} className={inputClass}>
-              {TIMEZONE_OPTIONS.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
+            <label className={labelClass}>End Date</label>
+            <input type="date" value={core.end_date} onChange={(e) => setCoreField('end_date', e.target.value)} className={inputClass} />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -181,6 +183,27 @@ export default function DynamicEventForm({ schema }: DynamicEventFormProps) {
           <div>
             <label className={labelClass}>End Time</label>
             <input type="time" value={core.end_time} onChange={(e) => setCoreField('end_time', e.target.value)} className={inputClass} />
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Timezone</label>
+          <select value={core.timezone} onChange={(e) => setCoreField('timezone', e.target.value)} className={inputClass}>
+            {TIMEZONE_OPTIONS.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Event Mode</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'in_person' as const, label: 'In-Person' },
+              { id: 'virtual' as const, label: 'Virtual' },
+              { id: 'hybrid' as const, label: 'Hybrid' },
+            ].map((m) => (
+              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${core.event_mode === m.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600'}`}>
+                <input type="radio" checked={core.event_mode === m.id} onChange={() => setCoreField('event_mode', m.id)} className="sr-only" />
+                {m.label}
+              </label>
+            ))}
           </div>
         </div>
       </div>
