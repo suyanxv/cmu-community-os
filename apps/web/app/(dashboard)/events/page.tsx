@@ -38,16 +38,20 @@ export default async function EventsPage() {
       AND status NOT IN ('past', 'archived')
   `
 
-  const rows = await sql`
+  const rows = (await sql`
     SELECT
       id, name, status, event_date, start_time, location_name, channels, max_capacity,
-      COALESCE(end_date, event_date)::text AS effective_end_date,
+      to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
       (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
     FROM events
     WHERE org_id = ${orgId} AND status != 'archived'
     ORDER BY event_date DESC
     LIMIT 100
-  ` as EventRow[]
+  `).map((r) => ({
+    ...r,
+    event_date: typeof r.event_date === 'string' ? r.event_date : new Date(r.event_date).toISOString().slice(0, 10),
+    channels: Array.isArray(r.channels) ? r.channels : [],
+  })) as EventRow[]
 
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
