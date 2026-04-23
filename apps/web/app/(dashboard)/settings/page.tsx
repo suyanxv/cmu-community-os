@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { OrganizationProfile } from '@clerk/nextjs'
+import { History, ArrowUpRight } from 'lucide-react'
 import type { TemplateField } from '@/lib/ai'
 import { useToast } from '@/components/ui/Toast'
 import TeamSection from '@/components/TeamSection'
@@ -184,6 +186,23 @@ export default function SettingsPage() {
       <div className={sectionClass}>
         <ReminderTemplatesEditor />
       </div>
+
+      {/* Activity / audit log — a reference, not a workflow, so it lives here */}
+      <Link
+        href="/activity"
+        className={`${sectionClass} flex items-center justify-between hover:border-sage-300 hover:shadow-sm transition-all group`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="bg-sage-50 p-2 rounded-lg">
+            <History className="w-5 h-5 text-sage-600" strokeWidth={1.75} />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Activity log</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Who did what and when — audit trail for every event, partner, and reminder change.</p>
+          </div>
+        </div>
+        <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-sage-600 shrink-0" strokeWidth={1.75} />
+      </Link>
 
       {/* Clerk org profile (invite, leave, etc.) */}
       <div className={sectionClass}>

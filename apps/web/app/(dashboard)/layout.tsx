@@ -12,13 +12,14 @@ import {
   Users,
   UserCircle,
   Bell,
-  History,
   Settings,
   Menu,
   X,
   type LucideIcon,
 } from 'lucide-react'
 
+// Activity lives under Settings (audit-shaped feature, not a daily workflow),
+// which keeps the mobile bottom nav below 8 items.
 const navItems: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/dashboard', label: 'Home',      Icon: Home },
   { href: '/events',    label: 'Events',    Icon: CalendarDays },
@@ -26,7 +27,6 @@ const navItems: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/partners',  label: 'Partners',  Icon: Users },
   { href: '/attendees', label: 'Attendees', Icon: UserCircle },
   { href: '/reminders', label: 'Reminders', Icon: Bell },
-  { href: '/activity',  label: 'Activity',  Icon: History },
   { href: '/settings',  label: 'Settings',  Icon: Settings },
 ]
 
@@ -35,7 +35,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navLinks = navItems.map(({ href, label, Icon }) => {
-    const active = pathname.startsWith(href)
+    // Treat /activity as a nested Settings page so the Settings item stays highlighted there.
+    const active = pathname.startsWith(href) || (href === '/settings' && pathname.startsWith('/activity'))
     return (
       <Link
         key={href}
@@ -125,7 +126,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Mobile bottom nav */}
         <nav className="bg-white border-t border-gray-200 flex shrink-0">
           {navItems.map(({ href, label, Icon }) => {
-            const active = pathname.startsWith(href)
+            // Treat /activity as a nested Settings page so the Settings item stays highlighted there.
+    const active = pathname.startsWith(href) || (href === '/settings' && pathname.startsWith('/activity'))
             return (
               <Link
                 key={href}
