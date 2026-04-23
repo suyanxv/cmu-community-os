@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { OrganizationSwitcher, UserButton } from '@clerk/nextjs'
 import { ToastProvider } from '@/components/ui/Toast'
 import {
+  Home,
   CalendarDays,
   Users,
   Bell,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react'
 
 const navItems: { href: string; label: string; Icon: LucideIcon }[] = [
+  { href: '/dashboard', label: 'Home',      Icon: Home },
   { href: '/events',    label: 'Events',    Icon: CalendarDays },
   { href: '/partners',  label: 'Partners',  Icon: Users },
   { href: '/reminders', label: 'Reminders', Icon: Bell },
