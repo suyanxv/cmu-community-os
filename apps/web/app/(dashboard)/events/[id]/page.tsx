@@ -10,6 +10,7 @@ import EventStatusControl from '@/components/events/EventStatusControl'
 import GenerateRemindersButton from '@/components/reminders/GenerateRemindersButton'
 import ShareEventButton from '@/components/events/ShareEventButton'
 import { FileText, Ticket, Bell } from 'lucide-react'
+import { formatEventDate } from '@/lib/dates'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -61,7 +62,7 @@ export default async function EventDetailPage({ params }: Params) {
             <EventStatusControl eventId={id} initialStatus={event.status} />
           </div>
           <p className="text-gray-500 mt-1">
-            {new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {formatEventDate(event.event_date as string)}
             {event.start_time && ` · ${event.start_time}`}
             {event.location_name && ` · ${event.location_name}`}
           </p>
@@ -205,9 +206,9 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
       <dl>
         <DetailRow label="Event Mode">{modeLabel}</DetailRow>
 
-        {event.end_date && String(event.end_date) !== String(event.event_date) ? (
+        {event.end_date && String(event.end_date).slice(0, 10) !== String(event.event_date).slice(0, 10) ? (
           <DetailRow label="End Date">
-            {new Date(event.end_date as string).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {formatEventDate(event.end_date as string)}
           </DetailRow>
         ) : null}
 
@@ -259,7 +260,7 @@ function EventDetails({ event }: { event: Record<string, unknown> }) {
         ) : null}
         {event.rsvp_deadline ? (
           <DetailRow label="RSVP Deadline">
-            {new Date(event.rsvp_deadline as string).toLocaleDateString()}
+            {formatEventDate(event.rsvp_deadline as string, { year: 'numeric', month: 'long', day: 'numeric' })}
           </DetailRow>
         ) : null}
 

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { sql } from '@/lib/db'
 import CheckInForm from './CheckInForm'
 import type { TemplateField } from '@/lib/ai'
+import { formatEventDate } from '@/lib/dates'
 
 type Params = { params: Promise<{ eventId: string }> }
 
@@ -61,9 +62,7 @@ export default async function CheckInPage({ params }: Params) {
           <p className="text-sm text-gray-500 mb-1">{event.org_name}</p>
           <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
           <p className="text-sm text-gray-500 mt-2">
-            {new Date(event.event_date).toLocaleDateString('en-US', {
-              weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-            })}
+            {formatEventDate(event.event_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             {event.start_time ? ` · ${event.start_time.slice(0, 5)}` : ''}
           </p>
           {locationLine && <p className="text-xs text-gray-400 mt-1">{locationLine}</p>}

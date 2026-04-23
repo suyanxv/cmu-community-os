@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useToast } from '@/components/ui/Toast'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Mail, Phone, Globe, Briefcase, Check, Sparkles } from 'lucide-react'
+import { formatEventDate } from '@/lib/dates'
 
 interface Partner {
   id: string
@@ -171,7 +172,7 @@ export default function PartnerDetailPage() {
                 <Link href={`/events/${ev.id}`} className="text-sage-600 hover:underline">{ev.event_name}</Link>
                 <div className="flex items-center gap-2 text-gray-400">
                   {ev.role && <span>{ev.role}</span>}
-                  <span>{new Date(ev.event_date).toLocaleDateString()}</span>
+                  <span>{formatEventDate(ev.event_date, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                   {ev.confirmed && <Check className="w-3.5 h-3.5 text-sage-600" strokeWidth={2.5} />}
                 </div>
               </div>

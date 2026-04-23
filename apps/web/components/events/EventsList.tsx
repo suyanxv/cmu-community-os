@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { formatEventDate, localToday } from '@/lib/dates'
 
 interface EventRow {
   id: string
@@ -28,7 +29,7 @@ const TABS: { id: FilterTab; label: string }[] = [
 export default function EventsList({ events }: { events: EventRow[] }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState<FilterTab>('all')
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -160,9 +161,7 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
           <p className="text-sm text-gray-500 mt-1">
-            {new Date(event.event_date).toLocaleDateString('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-            })}
+            {formatEventDate(event.event_date)}
             {event.location_name ? ` · ${event.location_name}` : ''}
           </p>
           {event.channels && event.channels.length > 0 && (
