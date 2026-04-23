@@ -72,7 +72,7 @@ export default function PartnersPage() {
   const inputClass = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-sage-500'
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Partners & Sponsors</h1>
         <button onClick={() => setShowForm(true)} className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700">
@@ -181,21 +181,23 @@ function PartnerList({ partners, query, tab }: { partners: Partner[]; query: str
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
       {filtered.map((p) => (
-        <Link key={p.id} href={`/partners/${p.id}`} className="block bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-gray-900">{p.company_name}</h2>
-              {p.contact_name && <p className="text-sm text-gray-500 mt-0.5">{p.contact_name}{p.email ? ` · ${p.email}` : ''}</p>}
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs bg-stone-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{p.type}</span>
-                {p.tier && <span className="text-xs bg-butter-100 text-butter-700 px-2 py-0.5 rounded-full">{p.tier}</span>}
+        <Link key={p.id} href={`/partners/${p.id}`} className="block bg-white border border-gray-200 rounded-xl p-4 hover:border-sage-300 hover:shadow-sm transition-all">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-semibold text-gray-900 truncate">{p.company_name}</h2>
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                  {p.status}
+                </span>
+              </div>
+              {p.contact_name && <p className="text-sm text-gray-500 mt-0.5 truncate">{p.contact_name}{p.email ? ` · ${p.email}` : ''}</p>}
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className="text-[11px] bg-stone-100 text-gray-600 px-1.5 py-0.5 rounded capitalize">{p.type}</span>
+                {p.tier && <span className="text-[11px] bg-butter-100 text-butter-700 px-1.5 py-0.5 rounded">{p.tier}</span>}
               </div>
             </div>
-            <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
-              {p.status}
-            </span>
           </div>
         </Link>
       ))}

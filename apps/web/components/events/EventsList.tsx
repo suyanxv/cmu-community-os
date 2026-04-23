@@ -71,7 +71,7 @@ export default function EventsList({ events }: { events: EventRow[] }) {
   return (
     <div>
       {/* Search + tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-md">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -107,12 +107,12 @@ export default function EventsList({ events }: { events: EventRow[] }) {
           </p>
         </div>
       ) : tab === 'all' ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {upcoming.length > 0 && <EventSection title="Upcoming" events={upcoming} />}
           {past.length > 0 && <EventSection title="Past" events={past} dim />}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {(tab === 'past' ? past : tab === 'draft' ? drafts : upcoming).map((event) => (
             <EventRowCard key={event.id} event={event} dim={tab === 'past'} />
           ))}
@@ -125,10 +125,10 @@ export default function EventsList({ events }: { events: EventRow[] }) {
 function EventSection({ title, events, dim = false }: { title: string; events: EventRow[]; dim?: boolean }) {
   return (
     <section>
-      <h2 className="text-xs uppercase tracking-wide font-semibold text-gray-500 mb-3">
+      <h2 className="text-xs uppercase tracking-wide font-semibold text-gray-500 mb-2">
         {title} <span className="text-gray-400">· {events.length}</span>
       </h2>
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {events.map((event) => <EventRowCard key={event.id} event={event} dim={dim} />)}
       </div>
     </section>
@@ -155,31 +155,33 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className={`block bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all ${dim ? 'opacity-75 hover:opacity-100' : ''}`}
+      className={`block bg-white border border-gray-200 rounded-xl p-4 hover:border-sage-300 hover:shadow-sm transition-all ${dim ? 'opacity-75 hover:opacity-100' : ''}`}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${statusStyle}`}>
+              {event.status}
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 mt-0.5">
             {formatEventDate(event.event_date)}
             {event.location_name ? ` · ${event.location_name}` : ''}
           </p>
           {event.channels && event.channels.length > 0 && (
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
               {event.channels.map((ch) => (
-                <span key={ch} className="text-xs bg-stone-100 text-gray-600 px-2 py-0.5 rounded-full">
+                <span key={ch} className="text-[11px] bg-stone-100 text-gray-600 px-1.5 py-0.5 rounded">
                   {ch}
                 </span>
               ))}
             </div>
           )}
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${statusStyle}`}>
-            {event.status}
-          </span>
+        <div className="shrink-0 text-right">
           {capacityPct !== null ? (
-            <div className="w-32">
+            <div className="w-28">
               <div className="flex items-baseline justify-between text-xs text-gray-500 mb-1">
                 <span className="font-medium text-gray-700">{event.rsvp_count}/{event.max_capacity}</span>
                 <span>{capacityPct}%</span>

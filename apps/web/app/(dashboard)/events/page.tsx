@@ -63,8 +63,8 @@ export default async function EventsPage() {
   })) as EventRow[]
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
         <h1 className="text-2xl font-bold text-gray-900">Events</h1>
         <div className="flex items-center gap-2">
           <Link
