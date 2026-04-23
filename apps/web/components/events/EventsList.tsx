@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, MapPin, Video, Users as UsersIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { CalendarDays, MapPin, Video, Users as UsersIcon, Trash2, X, CheckSquare } from 'lucide-react'
 import { formatEventDate, localToday } from '@/lib/dates'
+import { useToast } from '@/components/ui/Toast'
 
 interface EventHost {
   user_id: string
@@ -37,9 +39,50 @@ const TABS: { id: FilterTab; label: string }[] = [
 ]
 
 export default function EventsList({ events }: { events: EventRow[] }) {
+  const router = useRouter()
+  const toast = useToast()
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState<FilterTab>('all')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
   const today = localToday()
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const exitSelectMode = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const deleteSelected = async () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Permanently delete ${ids.length} event${ids.length === 1 ? '' : 's'}? This cannot be undone.`)) return
+    setDeleting(true)
+    const res = await fetch('/api/events/bulk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    setDeleting(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? 'Failed to delete events')
+      return
+    }
+    const { data } = await res.json()
+    toast.success(`Deleted ${data.deleted} event${data.deleted === 1 ? '' : 's'}`)
+    exitSelectMode()
+    router.refresh()
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -80,7 +123,33 @@ export default function EventsList({ events }: { events: EventRow[] }) {
 
   return (
     <div>
-      {/* Search + tabs */}
+      {/* Select-mode toolbar */}
+      {selectMode && (
+        <div className="mb-4 flex items-center justify-between gap-3 bg-sage-50 border border-sage-200 rounded-lg px-4 py-2.5">
+          <p className="text-sm text-sage-800">
+            <span className="font-medium">{selectedIds.size}</span> selected
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={deleteSelected}
+              disabled={deleting || selectedIds.size === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" strokeWidth={1.75} />
+              {deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
+            </button>
+            <button
+              onClick={exitSelectMode}
+              disabled={deleting}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-stone-100 disabled:opacity-50"
+            >
+              <X className="w-4 h-4" strokeWidth={1.75} /> Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Search + tabs + select */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-md">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,6 +176,15 @@ export default function EventsList({ events }: { events: EventRow[] }) {
             </button>
           ))}
         </div>
+        {!selectMode && (
+          <button
+            onClick={() => setSelectMode(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-stone-50"
+            title="Select multiple events"
+          >
+            <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> Select
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -118,13 +196,20 @@ export default function EventsList({ events }: { events: EventRow[] }) {
         </div>
       ) : tab === 'all' ? (
         <div className="space-y-6">
-          {upcoming.length > 0 && <EventSection title="Upcoming" events={upcoming} />}
-          {past.length > 0 && <EventSection title="Past" events={past} dim />}
+          {upcoming.length > 0 && <EventSection title="Upcoming" events={upcoming} selectMode={selectMode} selectedIds={selectedIds} onToggle={toggleSelected} />}
+          {past.length > 0 && <EventSection title="Past" events={past} dim selectMode={selectMode} selectedIds={selectedIds} onToggle={toggleSelected} />}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {(tab === 'past' ? past : tab === 'draft' ? drafts : upcoming).map((event) => (
-            <EventRowCard key={event.id} event={event} dim={tab === 'past'} />
+            <EventRowCard
+              key={event.id}
+              event={event}
+              dim={tab === 'past'}
+              selectMode={selectMode}
+              selected={selectedIds.has(event.id)}
+              onToggle={toggleSelected}
+            />
           ))}
         </div>
       )}
@@ -132,20 +217,46 @@ export default function EventsList({ events }: { events: EventRow[] }) {
   )
 }
 
-function EventSection({ title, events, dim = false }: { title: string; events: EventRow[]; dim?: boolean }) {
+interface SectionProps {
+  title: string
+  events: EventRow[]
+  dim?: boolean
+  selectMode: boolean
+  selectedIds: Set<string>
+  onToggle: (id: string) => void
+}
+
+function EventSection({ title, events, dim = false, selectMode, selectedIds, onToggle }: SectionProps) {
   return (
     <section>
       <h2 className="text-xs uppercase tracking-wide font-semibold text-gray-500 mb-2">
         {title} <span className="text-gray-400">· {events.length}</span>
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {events.map((event) => <EventRowCard key={event.id} event={event} dim={dim} />)}
+        {events.map((event) => (
+          <EventRowCard
+            key={event.id}
+            event={event}
+            dim={dim}
+            selectMode={selectMode}
+            selected={selectedIds.has(event.id)}
+            onToggle={onToggle}
+          />
+        ))}
       </div>
     </section>
   )
 }
 
-function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
+interface CardProps {
+  event: EventRow
+  dim: boolean
+  selectMode: boolean
+  selected: boolean
+  onToggle: (id: string) => void
+}
+
+function EventRowCard({ event, dim, selectMode, selected, onToggle }: CardProps) {
   const statusStyle =
     event.status === 'published' ? 'bg-green-100 text-green-700'
     : event.status === 'draft'   ? 'bg-butter-100 text-butter-700'
@@ -171,12 +282,24 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
         (mode === 'hybrid' ? 'Hybrid' : 'Location TBD')
   const LocationIcon = mode === 'virtual' ? Video : MapPin
 
-  return (
-    <Link
-      href={`/events/${event.id}`}
-      className={`block bg-white border border-gray-200 rounded-xl p-4 hover:border-sage-300 hover:shadow-sm transition-all ${dim ? 'opacity-75 hover:opacity-100' : ''}`}
-    >
-      <div className="flex items-start justify-between gap-3">
+  const cardClass = `relative block w-full text-left bg-white border rounded-xl p-4 transition-all ${
+    selected ? 'border-sage-500 ring-2 ring-sage-200' : 'border-gray-200 hover:border-sage-300 hover:shadow-sm'
+  } ${dim ? 'opacity-75 hover:opacity-100' : ''}`
+
+  const cardBody = (
+    <>
+      {selectMode && (
+        <div className={`absolute top-3 right-3 h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 ${
+          selected ? 'border-sage-500 bg-sage-500' : 'border-gray-300 bg-white'
+        }`}>
+          {selected && (
+            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+      )}
+      <div className={`flex items-start justify-between gap-3 ${selectMode ? 'pr-7' : ''}`}>
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
@@ -245,6 +368,24 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
           )}
         </div>
       </div>
+    </>
+  )
+
+  if (selectMode) {
+    return (
+      <button
+        type="button"
+        onClick={() => onToggle(event.id)}
+        className={cardClass}
+      >
+        {cardBody}
+      </button>
+    )
+  }
+
+  return (
+    <Link href={`/events/${event.id}`} className={cardClass}>
+      {cardBody}
     </Link>
   )
 }
