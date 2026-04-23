@@ -113,5 +113,5 @@ function PublicYearView({ events, token }: { events: PublicEvent[]; token: strin
     )
   }
 
-  return <EventsYearView events={mapped} hrefFor={(id) => `/c/${token}/events/${id}`} />
+  return <EventsYearView events={mapped} eventHrefBase={`/c/${token}/events`} />
 }

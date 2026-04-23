@@ -44,14 +44,17 @@ function parseLocalDate(ymd: string): Date {
 
 interface YearViewProps {
   events: YearEvent[]
-  /** Override the link target for each event card. Defaults to /events/[id]. */
-  hrefFor?: (eventId: string) => string
+  /** Base path for event links. Event ID is appended as "/{id}". Defaults to
+   *  "/events". Use a string (not a function) so this component can be
+   *  rendered from a server component without RSC serialization errors. */
+  eventHrefBase?: string
 }
 
-export default function EventsYearView({ events, hrefFor }: YearViewProps) {
+export default function EventsYearView({ events, eventHrefBase }: YearViewProps) {
   const now = new Date()
   const [viewYear, setViewYear] = useState(now.getFullYear())
-  const buildHref = hrefFor ?? ((id: string) => `/events/${id}`)
+  const base = eventHrefBase ?? '/events'
+  const buildHref = (id: string) => `${base}/${id}`
 
   const eventsByMonth = useMemo(() => {
     const buckets: YearEvent[][] = Array.from({ length: 12 }, () => [])
