@@ -5,6 +5,12 @@ import Link from 'next/link'
 import { CalendarDays, MapPin, Video, Users as UsersIcon } from 'lucide-react'
 import { formatEventDate, localToday } from '@/lib/dates'
 
+interface EventHost {
+  user_id: string
+  name: string
+  avatar_url: string | null
+}
+
 interface EventRow {
   id: string
   name: string
@@ -18,6 +24,7 @@ interface EventRow {
   rsvp_count: number
   max_capacity: number | null
   effective_end_date: string
+  hosts: EventHost[]
 }
 
 type FilterTab = 'all' | 'upcoming' | 'past' | 'draft'
@@ -186,6 +193,29 @@ function EventRowCard({ event, dim }: { event: EventRow; dim: boolean }) {
             <span className="truncate">{locationText}</span>
             {mode === 'hybrid' && <span className="text-[11px] bg-lavender-100 text-lavender-700 px-1.5 py-0.5 rounded">Hybrid</span>}
           </p>
+          {event.hosts && event.hosts.length > 0 && (
+            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+              <div className="flex -space-x-1.5 shrink-0">
+                {event.hosts.slice(0, 3).map((h) =>
+                  h.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={h.user_id} src={h.avatar_url} alt="" className="h-5 w-5 rounded-full border border-white object-cover" />
+                  ) : (
+                    <span key={h.user_id} className="h-5 w-5 rounded-full border border-white bg-sage-100 text-sage-700 flex items-center justify-center text-[10px] font-medium">
+                      {(h.name[0] ?? '?').toUpperCase()}
+                    </span>
+                  )
+                )}
+              </div>
+              <span className="truncate">
+                {event.hosts.length === 1
+                  ? event.hosts[0].name
+                  : event.hosts.length === 2
+                    ? `${event.hosts[0].name} & ${event.hosts[1].name}`
+                    : `${event.hosts[0].name} & ${event.hosts.length - 1} others`}
+              </span>
+            </div>
+          )}
           {event.channels && event.channels.length > 0 && (
             <div className="flex items-center gap-1.5 pt-1 flex-wrap">
               {event.channels.map((ch) => (

@@ -102,19 +102,31 @@ export async function POST(req: NextRequest) {
       RETURNING *
     `
 
-    // Link hosts (only those that are actually members of this org)
+    // Link hosts. Every event must have at least 1 host — if the form didn't
+    // select any, default to the creator. Invalid ids (non-members) are filtered.
     const eventId = rows[0].id as string
-    if (data.host_user_ids && data.host_user_ids.length > 0) {
-      for (const uid of data.host_user_ids) {
-        await sql`
-          INSERT INTO event_hosts (org_id, event_id, user_id)
-          SELECT ${ctx.orgId}, ${eventId}, ${uid}
-          WHERE EXISTS (
-            SELECT 1 FROM org_members WHERE org_id = ${ctx.orgId} AND user_id = ${uid}
-          )
-          ON CONFLICT (event_id, user_id) DO NOTHING
-        `
-      }
+    const requestedHostIds = (data.host_user_ids && data.host_user_ids.length > 0)
+      ? data.host_user_ids
+      : [ctx.userId]
+    for (const uid of requestedHostIds) {
+      await sql`
+        INSERT INTO event_hosts (org_id, event_id, user_id)
+        SELECT ${ctx.orgId}, ${eventId}, ${uid}
+        WHERE EXISTS (
+          SELECT 1 FROM org_members WHERE org_id = ${ctx.orgId} AND user_id = ${uid}
+        )
+        ON CONFLICT (event_id, user_id) DO NOTHING
+      `
+    }
+    // Safety net: if none of the requested ids were valid org members
+    // (shouldn't happen since ctx.userId is always a member), still insert creator.
+    const hostCheck = await sql`SELECT COUNT(*)::int AS n FROM event_hosts WHERE event_id = ${eventId}`
+    if (hostCheck[0].n === 0) {
+      await sql`
+        INSERT INTO event_hosts (org_id, event_id, user_id)
+        VALUES (${ctx.orgId}, ${eventId}, ${ctx.userId})
+        ON CONFLICT (event_id, user_id) DO NOTHING
+      `
     }
 
     // Auto-generate reminders from org-level templates

@@ -22,6 +22,7 @@ interface EventRow {
   rsvp_count: number
   max_capacity: number | null
   effective_end_date: string
+  hosts: Array<{ user_id: string; name: string; avatar_url: string | null }>
 }
 
 export default async function EventsPage() {
@@ -46,23 +47,59 @@ export default async function EventsPage() {
     return String(v ?? '').slice(0, 10)
   }
 
-  const rows = (await sql`
-    SELECT
-      id, name, status,
-      to_char(event_date, 'YYYY-MM-DD') AS event_date,
-      start_time, location_name, location_address, event_mode, channels, max_capacity,
-      to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
-      (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
-    FROM events
-    WHERE org_id = ${orgId} AND status != 'archived'
-    ORDER BY event_date DESC
-    LIMIT 100
-  `).map((r) => ({
-    ...r,
-    event_date: toIsoDate(r.event_date),
-    effective_end_date: toIsoDate(r.effective_end_date),
-    channels: Array.isArray(r.channels) ? r.channels : [],
-  })) as EventRow[]
+  // Events list query. Hosts subquery is wrapped in a try/catch-safe shape:
+  // if event_hosts doesn't exist yet (pre-migration) the query still succeeds.
+  let rows: EventRow[] = []
+  try {
+    rows = (await sql`
+      SELECT
+        id, name, status,
+        to_char(event_date, 'YYYY-MM-DD') AS event_date,
+        start_time, location_name, location_address, event_mode, channels, max_capacity,
+        to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
+        (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count,
+        COALESCE((
+          SELECT json_agg(json_build_object(
+            'user_id',    u.id,
+            'name',       COALESCE(u.full_name, u.email),
+            'avatar_url', u.avatar_url
+          ))
+          FROM event_hosts eh
+          JOIN users u ON u.id = eh.user_id
+          WHERE eh.event_id = events.id
+        ), '[]'::json) AS hosts
+      FROM events
+      WHERE org_id = ${orgId} AND status != 'archived'
+      ORDER BY event_date DESC
+      LIMIT 100
+    `).map((r) => ({
+      ...r,
+      event_date: toIsoDate(r.event_date),
+      effective_end_date: toIsoDate(r.effective_end_date),
+      channels: Array.isArray(r.channels) ? r.channels : [],
+      hosts: Array.isArray(r.hosts) ? r.hosts : [],
+    })) as EventRow[]
+  } catch {
+    // Fallback: event_hosts table missing, fetch without it
+    rows = (await sql`
+      SELECT
+        id, name, status,
+        to_char(event_date, 'YYYY-MM-DD') AS event_date,
+        start_time, location_name, location_address, event_mode, channels, max_capacity,
+        to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
+        (SELECT COALESCE(SUM(guest_count), 0)::int FROM rsvps r WHERE r.event_id = events.id AND r.status = 'confirmed') AS rsvp_count
+      FROM events
+      WHERE org_id = ${orgId} AND status != 'archived'
+      ORDER BY event_date DESC
+      LIMIT 100
+    `).map((r) => ({
+      ...r,
+      event_date: toIsoDate(r.event_date),
+      effective_end_date: toIsoDate(r.effective_end_date),
+      channels: Array.isArray(r.channels) ? r.channels : [],
+      hosts: [],
+    })) as EventRow[]
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">

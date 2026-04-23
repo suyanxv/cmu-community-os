@@ -307,6 +307,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
         <HostsSelector
           selectedIds={form.host_user_ids}
           onChange={(ids) => set('host_user_ids', ids)}
+          defaultToCurrentUser={!eventId}
         />
       </div>
 

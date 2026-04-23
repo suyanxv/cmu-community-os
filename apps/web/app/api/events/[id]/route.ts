@@ -112,6 +112,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     // Sync hosts if the caller explicitly sent host_user_ids
     if ('host_user_ids' in data && data.host_user_ids !== undefined) {
       const nextIds = data.host_user_ids
+      if (nextIds.length === 0) {
+        throw new ApiError(400, 'An event must have at least one host')
+      }
       // Remove any host not in the new set
       await sql`
         DELETE FROM event_hosts
@@ -128,6 +131,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           )
           ON CONFLICT (event_id, user_id) DO NOTHING
         `
+      }
+      // Guard against all requested ids being invalid (would leave 0 hosts)
+      const countAfter = await sql`SELECT COUNT(*)::int AS n FROM event_hosts WHERE event_id = ${id}`
+      if (countAfter[0].n === 0) {
+        throw new ApiError(400, 'None of the selected hosts are members of this org')
       }
     }
 
