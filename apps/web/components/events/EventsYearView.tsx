@@ -42,9 +42,16 @@ function parseLocalDate(ymd: string): Date {
   return new Date(y, m - 1, d)
 }
 
-export default function EventsYearView({ events }: { events: YearEvent[] }) {
+interface YearViewProps {
+  events: YearEvent[]
+  /** Override the link target for each event card. Defaults to /events/[id]. */
+  hrefFor?: (eventId: string) => string
+}
+
+export default function EventsYearView({ events, hrefFor }: YearViewProps) {
   const now = new Date()
   const [viewYear, setViewYear] = useState(now.getFullYear())
+  const buildHref = hrefFor ?? ((id: string) => `/events/${id}`)
 
   const eventsByMonth = useMemo(() => {
     const buckets: YearEvent[][] = Array.from({ length: 12 }, () => [])
@@ -112,6 +119,7 @@ export default function EventsYearView({ events }: { events: YearEvent[] }) {
             name={name}
             isCurrent={viewYear === now.getFullYear() && idx === now.getMonth()}
             events={eventsByMonth[idx]}
+            buildHref={buildHref}
           />
         ))}
       </div>
@@ -128,7 +136,11 @@ function LegendDot({ className, label }: { className: string; label: string }) {
   )
 }
 
-function MonthCard({ name, isCurrent, events }: { name: string; isCurrent: boolean; events: YearEvent[] }) {
+function MonthCard({
+  name, isCurrent, events, buildHref,
+}: {
+  name: string; isCurrent: boolean; events: YearEvent[]; buildHref: (id: string) => string
+}) {
   return (
     <div className={`border rounded-xl overflow-hidden bg-white ${isCurrent ? 'border-sage-400' : 'border-gray-200'}`}>
       <div className={`px-3 py-2 border-b text-sm font-semibold ${isCurrent ? 'bg-sage-50 text-sage-800 border-sage-200' : 'bg-stone-50 text-gray-700 border-gray-100'}`}>
@@ -141,14 +153,14 @@ function MonthCard({ name, isCurrent, events }: { name: string; isCurrent: boole
         {events.length === 0 ? (
           <li className="text-xs text-gray-300 px-1 py-1">—</li>
         ) : (
-          events.map((e) => <EventLine key={e.id} e={e} />)
+          events.map((e) => <EventLine key={e.id} e={e} buildHref={buildHref} />)
         )}
       </ul>
     </div>
   )
 }
 
-function EventLine({ e }: { e: YearEvent }) {
+function EventLine({ e, buildHref }: { e: YearEvent; buildHref: (id: string) => string }) {
   const day = parseLocalDate(e.event_date).getDate()
   const categoryCls = CATEGORY_CLASSES[e.category] ?? CATEGORY_CLASSES.internal
   const textCls = STATUS_TEXT_CLASS[e.status] ?? STATUS_TEXT_CLASS.published
@@ -157,7 +169,7 @@ function EventLine({ e }: { e: YearEvent }) {
   return (
     <li>
       <Link
-        href={`/events/${e.id}`}
+        href={buildHref(e.id)}
         className={`block text-xs border rounded-md px-2 py-1.5 transition-colors ${categoryCls} ${isCancelled ? 'opacity-70' : ''}`}
       >
         <div className="flex items-start gap-1.5">

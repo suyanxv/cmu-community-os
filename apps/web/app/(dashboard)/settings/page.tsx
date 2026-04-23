@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/Toast'
 import TeamSection from '@/components/TeamSection'
 import ReminderTemplatesEditor from '@/components/ReminderTemplatesEditor'
 import PermissionsReference from '@/components/PermissionsReference'
+import PublicShareSection from '@/components/PublicShareSection'
 
 export default function SettingsPage() {
   const toast = useToast()
@@ -185,6 +186,11 @@ export default function SettingsPage() {
       {/* Event reminder templates */}
       <div className={sectionClass}>
         <ReminderTemplatesEditor />
+      </div>
+
+      {/* Public calendar share link */}
+      <div className={sectionClass}>
+        <PublicShareSection />
       </div>
 
       {/* Activity / audit log — a reference, not a workflow, so it lives here */}
