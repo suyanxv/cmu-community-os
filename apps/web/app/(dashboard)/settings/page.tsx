@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import { OrganizationProfile } from '@clerk/nextjs'
 import type { TemplateField } from '@/lib/ai'
+import { useToast } from '@/components/ui/Toast'
 
 export default function SettingsPage() {
+  const toast = useToast()
   const [schema, setSchema] = useState<TemplateField[] | null>(null)
   const [input, setInput] = useState('')
   const [parsing, setParsing] = useState(false)
@@ -44,14 +46,19 @@ export default function SettingsPage() {
   const saveSchema = async () => {
     if (!pendingSchema) return
     setSaving(true)
-    await fetch('/api/organizations/template', {
+    const res = await fetch('/api/organizations/template', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: pendingSchema }),
     })
-    setSchema(pendingSchema)
-    setPendingSchema(null)
-    setInput('')
+    if (res.ok) {
+      toast.success(`Template saved — ${pendingSchema.length} custom fields active`)
+      setSchema(pendingSchema)
+      setPendingSchema(null)
+      setInput('')
+    } else {
+      toast.error('Failed to save template')
+    }
     setSaving(false)
   }
 
@@ -59,6 +66,7 @@ export default function SettingsPage() {
     if (!confirm('Remove custom template and use default form?')) return
     await fetch('/api/organizations/template', { method: 'DELETE' })
     setSchema(null)
+    toast.info('Reverted to default event form')
   }
 
   const sectionClass = 'bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4'

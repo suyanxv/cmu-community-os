@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useToast } from '@/components/ui/Toast'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 interface Partner {
   id: string
@@ -45,6 +47,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const toast = useToast()
   const [partner, setPartner] = useState<Partner | null>(null)
   const [loading, setLoading] = useState(true)
   const [showNoteForm, setShowNoteForm] = useState(false)
@@ -61,18 +64,23 @@ export default function PartnerDetailPage() {
   const addNote = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await fetch(`/api/partners/${id}/communications`, {
+    const res = await fetch(`/api/partners/${id}/communications`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'note', body: note }),
     })
     setSaving(false)
-    setNote('')
-    setShowNoteForm(false)
-    // Refresh
-    fetch(`/api/partners/${id}`)
-      .then((r) => r.json())
-      .then((d) => setPartner(d.data))
+    if (res.ok) {
+      toast.success('Note saved')
+      setNote('')
+      setShowNoteForm(false)
+      // Refresh
+      fetch(`/api/partners/${id}`)
+        .then((r) => r.json())
+        .then((d) => setPartner(d.data))
+    } else {
+      toast.error('Failed to save note')
+    }
   }
 
   const updateStatus = async (status: string) => {
@@ -82,9 +90,17 @@ export default function PartnerDetailPage() {
       body: JSON.stringify({ status }),
     })
     setPartner((p) => p ? { ...p, status } : p)
+    toast.success(`Marked as ${status}`)
   }
 
-  if (loading) return <div className="p-8 text-gray-400">Loading…</div>
+  if (loading) return (
+    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-4">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-7 w-64" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-24 w-full rounded-xl" />
+    </div>
+  )
   if (!partner) return <div className="p-8 text-gray-500">Partner not found.</div>
 
   return (
