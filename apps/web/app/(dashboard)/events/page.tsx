@@ -14,6 +14,7 @@ interface EventRow {
   name: string
   cover_emoji: string | null
   status: string
+  category: 'internal' | 'partnered' | 'external'
   event_date: string
   start_time: string | null
   location_name: string | null
@@ -34,13 +35,15 @@ export default async function EventsPage() {
   const orgId = await getOrgId(clerkOrgId)
   if (!orgId) return null
 
-  // Auto-mark events past their end date as 'past' (idempotent)
+  // Auto-mark events past their end date as 'past' (idempotent).
+  // Cancelled events stay cancelled so they can be visually flagged without being
+  // silently reclassified as 'past'.
   await sql`
     UPDATE events
     SET status = 'past', updated_at = NOW()
     WHERE org_id = ${orgId}
       AND COALESCE(end_date, event_date) < CURRENT_DATE
-      AND status NOT IN ('past', 'archived')
+      AND status NOT IN ('past', 'archived', 'cancelled')
   `
 
   const toIsoDate = (v: unknown): string => {
@@ -55,7 +58,7 @@ export default async function EventsPage() {
   try {
     rows = (await sql`
       SELECT
-        id, name, status,
+        id, name, status, category,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
         start_time, location_name, location_address, event_mode, channels, tags, max_capacity, cover_emoji,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,
@@ -86,7 +89,7 @@ export default async function EventsPage() {
     // Fallback: event_hosts table missing, fetch without it
     rows = (await sql`
       SELECT
-        id, name, status,
+        id, name, status, category,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
         start_time, location_name, location_address, event_mode, channels, tags, max_capacity, cover_emoji,
         to_char(COALESCE(end_date, event_date), 'YYYY-MM-DD') AS effective_end_date,

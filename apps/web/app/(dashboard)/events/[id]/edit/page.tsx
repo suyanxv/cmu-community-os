@@ -71,6 +71,7 @@ export default async function EditEventPage({ params }: Params) {
     checkin_welcome_message: (event.checkin_config as Record<string, unknown> | null)?.welcome_message as string ?? '',
     checkin_fields: ((event.checkin_config as { fields?: TemplateField[] } | null)?.fields as TemplateField[] | undefined) ?? DEFAULT_CHECKIN_FIELDS,
     host_user_ids: hostUserIds,
+    category: (event.category ?? 'internal') as 'internal' | 'partnered' | 'external',
   }
 
   return (

@@ -3,10 +3,11 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, MapPin, Video, Users as UsersIcon, Trash2, X, CheckSquare, LayoutGrid, List as ListIcon } from 'lucide-react'
+import { CalendarDays, MapPin, Video, Users as UsersIcon, Trash2, X, CheckSquare, LayoutGrid, List as ListIcon, Columns3 } from 'lucide-react'
 import { formatEventDate, localToday } from '@/lib/dates'
 import { useToast } from '@/components/ui/Toast'
 import EventsCalendar from '@/components/events/EventsCalendar'
+import EventsYearView from '@/components/events/EventsYearView'
 
 interface EventHost {
   user_id: string
@@ -19,6 +20,7 @@ interface EventRow {
   name: string
   cover_emoji: string | null
   status: string
+  category: 'internal' | 'partnered' | 'external'
   event_date: string
   start_time: string | null
   location_name: string | null
@@ -50,7 +52,7 @@ export default function EventsList({ events }: { events: EventRow[] }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
-  const [view, setView] = useState<'list' | 'calendar'>('list')
+  const [view, setView] = useState<'list' | 'calendar' | 'year'>('list')
   const today = localToday()
 
   // Distinct tags across the fetched events, sorted alphabetically
@@ -242,7 +244,16 @@ export default function EventsList({ events }: { events: EventRow[] }) {
               }`}
               title="Calendar view"
             >
-              <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.75} /> Calendar
+              <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.75} /> Month
+            </button>
+            <button
+              onClick={() => setView('year')}
+              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors ${
+                view === 'year' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title="Year view"
+            >
+              <Columns3 className="w-3.5 h-3.5" strokeWidth={1.75} /> Year
             </button>
           </div>
           {!selectMode && view === 'list' && (
@@ -289,7 +300,18 @@ export default function EventsList({ events }: { events: EventRow[] }) {
         </div>
       )}
 
-      {view === 'calendar' ? (
+      {view === 'year' ? (
+        <EventsYearView events={filtered.map((e) => ({
+          id: e.id, name: e.name,
+          cover_emoji: e.cover_emoji,
+          event_date: e.event_date,
+          effective_end_date: e.effective_end_date,
+          status: e.status,
+          category: e.category ?? 'internal',
+          location_name: e.location_name,
+          rsvp_count: e.rsvp_count,
+        }))} />
+      ) : view === 'calendar' ? (
         <EventsCalendar events={filtered.map((e) => ({
           id: e.id, name: e.name,
           event_date: e.event_date,
@@ -374,7 +396,16 @@ function EventRowCard({ event, dim, selectMode, selected, onToggle, onPublish }:
     event.status === 'published' ? 'bg-green-100 text-green-700'
     : event.status === 'draft'   ? 'bg-butter-100 text-butter-700'
     : event.status === 'past'    ? 'bg-stone-200 text-stone-600'
+    : event.status === 'cancelled' ? 'bg-red-100 text-red-700'
     : 'bg-gray-100 text-gray-600'
+
+  // 3-pixel left stripe reflecting the category — matches the spreadsheet's color key.
+  const categoryStripe =
+    event.category === 'partnered' ? 'border-l-4 border-l-butter-400'
+    : event.category === 'external' ? 'border-l-4 border-l-lavender-400'
+    : 'border-l-4 border-l-sage-300'
+
+  const isCancelled = event.status === 'cancelled'
 
   const capacityPct = event.max_capacity && event.max_capacity > 0
     ? Math.min(100, Math.round((event.rsvp_count / event.max_capacity) * 100))
@@ -395,9 +426,9 @@ function EventRowCard({ event, dim, selectMode, selected, onToggle, onPublish }:
         (mode === 'hybrid' ? 'Hybrid' : 'Location TBD')
   const LocationIcon = mode === 'virtual' ? Video : MapPin
 
-  const cardClass = `relative block w-full text-left bg-white border rounded-xl p-4 transition-all ${
+  const cardClass = `relative block w-full text-left bg-white border rounded-xl p-4 transition-all ${categoryStripe} ${
     selected ? 'border-sage-500 ring-2 ring-sage-200' : 'border-gray-200 hover:border-sage-300 hover:shadow-sm'
-  } ${dim ? 'opacity-75 hover:opacity-100' : ''}`
+  } ${dim ? 'opacity-75 hover:opacity-100' : ''} ${isCancelled ? 'bg-red-50/40' : ''}`
 
   const cardBody = (
     <>
@@ -416,7 +447,7 @@ function EventRowCard({ event, dim, selectMode, selected, onToggle, onPublish }:
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             {event.cover_emoji && <span className="text-lg" aria-hidden>{event.cover_emoji}</span>}
-            <h3 className="font-semibold text-gray-900 truncate">{event.name}</h3>
+            <h3 className={`font-semibold truncate ${isCancelled ? 'text-red-600 line-through' : 'text-gray-900'}`}>{event.name}</h3>
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${statusStyle}`}>
               {event.status}
             </span>

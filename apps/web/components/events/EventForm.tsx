@@ -39,6 +39,7 @@ interface EventFormData {
   checkin_welcome_message: string
   checkin_fields: TemplateField[]
   host_user_ids: string[]
+  category: 'internal' | 'partnered' | 'external'
 }
 
 const CHANNEL_OPTIONS = [
@@ -97,6 +98,7 @@ const defaultValues: EventFormData = {
     { id: 'how_heard',       label: 'How did you hear about us?', type: 'text', required: false, placeholder: 'WhatsApp, friend, email…' },
   ],
   host_user_ids: [],
+  category: 'internal',
 }
 
 interface EventFormProps {
@@ -235,6 +237,21 @@ export default function EventForm({ initialValues, eventId, customFields, initia
               placeholder="CMU Seattle Alumni Mixer"
               className={inputClass}
             />
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Category</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'internal' as const,  label: 'Internal',   hint: 'Org is running it' },
+              { id: 'partnered' as const, label: 'Partnered',  hint: 'Co-hosted with another org' },
+              { id: 'external' as const,  label: 'External',   hint: "Attending a 3rd-party event" },
+            ].map((c) => (
+              <label key={c.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.category === c.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`} title={c.hint}>
+                <input type="radio" name="category" value={c.id} checked={form.category === c.id} onChange={() => set('category', c.id)} className="sr-only" />
+                {c.label}
+              </label>
+            ))}
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

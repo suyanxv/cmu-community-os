@@ -7,7 +7,8 @@ import { ApiError, errorResponse } from '@/lib/errors'
 
 const UpdateEventSchema = z.object({
   name: z.string().min(1).optional(),
-  status: z.enum(['draft', 'published', 'past', 'archived']).optional(),
+  status: z.enum(['draft', 'published', 'past', 'cancelled', 'archived']).optional(),
+  category: z.enum(['internal', 'partnered', 'external']).optional(),
   event_date: z.string().optional(),
   end_date: z.string().optional().nullable(),
   start_time: z.string().optional(),
@@ -106,6 +107,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         custom_fields    = CASE WHEN ${'custom_fields' in data} THEN ${JSON.stringify(data.custom_fields ?? {})}::jsonb ELSE custom_fields END,
         checkin_config   = CASE WHEN ${'checkin_config' in data} THEN ${JSON.stringify(data.checkin_config ?? {})}::jsonb ELSE checkin_config END,
         cover_emoji      = CASE WHEN ${'cover_emoji' in data} THEN ${data.cover_emoji ?? null} ELSE cover_emoji END,
+        category         = COALESCE(${data.category ?? null}, category),
         updated_at       = NOW()
       WHERE id = ${id} AND org_id = ${ctx.orgId}
       RETURNING *

@@ -31,11 +31,15 @@
 
   --color-lavender-50:  #f5f3fb;
   --color-lavender-100: #e6e0f2;
+  --color-lavender-200: #d1c7e6;
+  --color-lavender-400: #b6a4d8;
   --color-lavender-500: #a897d0;
   --color-lavender-700: #6e5b9b;
 
   --color-butter-50:  #fff8e1;
   --color-butter-100: #fdedb7;
+  --color-butter-200: #f7e296;
+  --color-butter-400: #eecf7e;
   --color-butter-500: #e7c26a;
   --color-butter-700: #8f6b1e;
 }

@@ -4,18 +4,20 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 
-type Status = 'draft' | 'published' | 'past'
+type Status = 'draft' | 'published' | 'past' | 'cancelled'
 
 const STATUS_LABEL: Record<Status, string> = {
   draft: 'Draft',
   published: 'Published',
   past: 'Past',
+  cancelled: 'Cancelled',
 }
 
 const STATUS_STYLE: Record<Status, string> = {
   draft: 'bg-butter-100 text-butter-700',
   published: 'bg-green-100 text-green-700',
   past: 'bg-stone-200 text-stone-600',
+  cancelled: 'bg-red-100 text-red-700 line-through',
 }
 
 export default function EventStatusControl({ eventId, initialStatus }: { eventId: string; initialStatus: string }) {
@@ -44,6 +46,7 @@ export default function EventStatusControl({ eventId, initialStatus }: { eventId
     toast.success(
       next === 'published' ? 'Event published' :
       next === 'draft'     ? 'Moved to draft' :
+      next === 'cancelled' ? 'Event cancelled' :
       'Marked as past'
     )
     router.refresh()
@@ -78,8 +81,8 @@ export default function EventStatusControl({ eventId, initialStatus }: { eventId
         </svg>
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-          {(['draft', 'published', 'past'] as Status[]).map((s) => (
+        <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
+          {(['draft', 'published', 'past', 'cancelled'] as Status[]).map((s) => (
             <button
               key={s}
               onClick={() => update(s)}
