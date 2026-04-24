@@ -18,6 +18,13 @@ interface CheckedInAttendee {
   how_heard: string | null
 }
 
+// "Was this person on the list before they walked in?"
+// csv_import / manual / rsvp_form → had an RSVP, then attended
+// check_in → didn't RSVP, walked in cold
+function hadPriorRsvp(source: string | null | undefined): boolean {
+  return !!source && source !== 'check_in'
+}
+
 interface FieldDef { id: string; label: string }
 
 export default function AttendancePage() {
@@ -101,9 +108,18 @@ export default function AttendancePage() {
             Live list of checked-in attendees. Updates every 10 seconds.
           </p>
         </div>
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-3xl font-bold text-sage-700">{attendees.length}</span>
           <span className="text-sm text-gray-500">checked in</span>
+          {(() => {
+            const rsvped = attendees.filter((a) => hadPriorRsvp(a.source)).length
+            const walkIns = attendees.length - rsvped
+            return (attendees.length > 0) ? (
+              <span className="text-xs text-gray-400 ml-2">
+                {rsvped} RSVPed · {walkIns} walk-in{walkIns === 1 ? '' : 's'}
+              </span>
+            ) : null
+          })()}
         </div>
       </div>
 
@@ -176,7 +192,18 @@ export default function AttendancePage() {
                   return (
                     <tr key={a.id} className="hover:bg-stone-50 align-top">
                       <td className="px-4 py-3 font-medium text-gray-900">
-                        {a.name}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{a.name}</span>
+                          {hadPriorRsvp(a.source) ? (
+                            <span className="text-[10px] uppercase tracking-wide bg-sage-50 text-sage-700 border border-sage-200 px-1.5 py-0.5 rounded-full font-medium">
+                              RSVPed
+                            </span>
+                          ) : (
+                            <span className="text-[10px] uppercase tracking-wide bg-butter-50 text-butter-700 border border-butter-200 px-1.5 py-0.5 rounded-full font-medium">
+                              Walk-in
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-400 sm:hidden mt-0.5">{a.email}</div>
                         {extras.length > 0 && (
                           <div className="text-xs text-gray-500 lg:hidden mt-1 space-y-0.5">
