@@ -17,6 +17,35 @@ AI-native event OS for volunteer-led community organizations (alumni networks, c
 5. **Plan ahead** — ideas backlog for brainstorm-stage events, year-grid calendar with color-coded categories (internal / partnered / external), co-host picker that auto-syncs to the Partners CRM.
 6. **Share with the board** — rotatable public calendar URL (`/c/<token>`) so board members see upcoming programming without needing a Quorum login.
 
+## Screenshots
+
+<p align="center">
+  <img src=".github/assets/screenshots/year-view.png" width="860" alt="Year calendar view with color-coded event categories">
+</p>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src=".github/assets/screenshots/event-detail.png" width="420" alt="Event detail page with broadcasts, partners, and check-in">
+      <br><sub>Event detail — broadcasts + partners + check-in all in one place</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src=".github/assets/screenshots/content-generation.png" width="420" alt="AI-generated content across five channels">
+      <br><sub>AI content — 5 channels from one event context, prompt-cached</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src=".github/assets/screenshots/ideas.png" width="420" alt="Event ideas backlog">
+      <br><sub>Ideas backlog — brainstorm → promote to draft event</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src=".github/assets/screenshots/public-share-mobile.png" width="260" alt="Public shareable calendar on mobile">
+      <br><sub>Public share URL — board members view without login</sub>
+    </td>
+  </tr>
+</table>
+
 ## Stack
 
 | Layer | Tool |
