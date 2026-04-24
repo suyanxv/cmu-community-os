@@ -21,27 +21,28 @@ AI-native event OS for volunteer-led community organizations (alumni networks, c
 
 <p align="center">
   <img src=".github/assets/screenshots/year-view.png" width="860" alt="Year calendar view with color-coded event categories">
+  <br><sub>Year view — 12 months at a glance, color-coded by category (internal · partnered · external · cancelled)</sub>
 </p>
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src=".github/assets/screenshots/event-detail.png" width="420" alt="Event detail page with broadcasts, partners, and check-in">
-      <br><sub>Event detail — broadcasts + partners + check-in all in one place</sub>
+      <img src=".github/assets/screenshots/events-list.png" width="420" alt="Events list with category stripes and channels">
+      <br><sub>Events list — category stripe + hosts + channels surfaced on each card</sub>
     </td>
     <td width="50%" align="center">
-      <img src=".github/assets/screenshots/content-generation.png" width="420" alt="AI-generated content across five channels">
-      <br><sub>AI content — 5 channels from one event context, prompt-cached</sub>
+      <img src=".github/assets/screenshots/event-detail.png" width="420" alt="Event detail page with broadcasts, partners, and check-in">
+      <br><sub>Event detail — stats, check-in, broadcasts (email + WhatsApp), partners</sub>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <img src=".github/assets/screenshots/ideas.png" width="420" alt="Event ideas backlog">
-      <br><sub>Ideas backlog — brainstorm → promote to draft event</sub>
+      <img src=".github/assets/screenshots/content-generation.png" width="420" alt="AI-generated email content for an event">
+      <br><sub>AI content — 5 channels from one event context, prompt-cached</sub>
     </td>
     <td width="50%" align="center">
-      <img src=".github/assets/screenshots/public-share-mobile.png" width="260" alt="Public shareable calendar on mobile">
-      <br><sub>Public share URL — board members view without login</sub>
+      <img src=".github/assets/screenshots/public-share.png" width="420" alt="Public shareable calendar accessed without login">
+      <br><sub>Public share URL — board members view upcoming events without a login</sub>
     </td>
   </tr>
 </table>
