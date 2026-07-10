@@ -85,6 +85,7 @@ export default async function EditEventPage({ params }: Params) {
     notes: event.notes ?? '',
     checkin_whatsapp_url: (event.checkin_config as Record<string, unknown> | null)?.whatsapp_url as string ?? '',
     checkin_welcome_message: (event.checkin_config as Record<string, unknown> | null)?.welcome_message as string ?? '',
+    checkin_success_message: (event.checkin_config as Record<string, unknown> | null)?.success_message as string ?? '',
     checkin_fields: ((event.checkin_config as { fields?: TemplateField[] } | null)?.fields as TemplateField[] | undefined) ?? DEFAULT_CHECKIN_FIELDS,
     host_user_ids: hostUserIds,
     category: (event.category ?? 'internal') as 'internal' | 'partnered' | 'external',

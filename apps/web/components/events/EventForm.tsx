@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
-import type { TemplateField } from '@/lib/ai'
+import type { ParsedEvent, TemplateField } from '@/lib/ai'
 import CheckInFieldsEditor from '@/components/events/CheckInFieldsEditor'
 import HostsSelector from '@/components/events/HostsSelector'
 import PartnerCombobox from '@/components/events/PartnerCombobox'
@@ -38,6 +38,7 @@ interface EventFormData {
   notes: string
   checkin_whatsapp_url: string
   checkin_welcome_message: string
+  checkin_success_message: string
   checkin_fields: TemplateField[]
   host_user_ids: string[]
   category: 'internal' | 'partnered' | 'external'
@@ -94,6 +95,7 @@ const defaultValues: EventFormData = {
   notes: '',
   checkin_whatsapp_url: '',
   checkin_welcome_message: '',
+  checkin_success_message: '',
   checkin_fields: [
     { id: 'graduation_year', label: 'Graduation Year',            type: 'text', required: false, placeholder: '2020' },
     { id: 'school',          label: 'School / Program',           type: 'text', required: false, placeholder: 'Tepper, SCS, Heinz, …' },
@@ -121,6 +123,9 @@ export default function EventForm({ initialValues, eventId, customFields, initia
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [quickFillInput, setQuickFillInput] = useState('')
+  const [quickFilling, setQuickFilling] = useState(false)
+  const [quickFillError, setQuickFillError] = useState<string | null>(null)
 
   const setCustomValue = (id: string, value: unknown) =>
     setCustomValues((prev) => ({ ...prev, [id]: value }))
@@ -132,6 +137,51 @@ export default function EventForm({ initialValues, eventId, customFields, initia
     set('channels', form.channels.includes(ch)
       ? form.channels.filter((c) => c !== ch)
       : [...form.channels, ch])
+  }
+
+  const handleQuickFill = async () => {
+    if (!quickFillInput.trim()) return
+    setQuickFilling(true)
+    setQuickFillError(null)
+
+    try {
+      const res = await fetch('/api/events/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: quickFillInput }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setQuickFillError(data.error ?? 'Something went wrong reading those details. Try again or fill the form manually.')
+        return
+      }
+
+      const parsed = data.data as ParsedEvent
+      // Only overwrite fields the AI actually extracted, so a partial parse
+      // never wipes out something the user already typed.
+      setForm((f) => ({
+        ...f,
+        ...(parsed.name             ? { name: parsed.name } : {}),
+        ...(parsed.event_date       ? { event_date: parsed.event_date } : {}),
+        ...(parsed.end_date         ? { end_date: parsed.end_date } : {}),
+        ...(parsed.start_time       ? { start_time: parsed.start_time } : {}),
+        ...(parsed.end_time         ? { end_time: parsed.end_time } : {}),
+        ...(parsed.timezone         ? { timezone: parsed.timezone } : {}),
+        ...(parsed.location_name    ? { location_name: parsed.location_name } : {}),
+        ...(parsed.location_address ? { location_address: parsed.location_address } : {}),
+        ...(parsed.description      ? { description: parsed.description } : {}),
+        ...(parsed.max_capacity     ? { max_capacity: String(parsed.max_capacity) } : {}),
+        ...(parsed.tags?.length     ? { tags: parsed.tags.join(', ') } : {}),
+        event_mode: parsed.event_mode ?? f.event_mode,
+        is_virtual: parsed.event_mode ? parsed.event_mode === 'virtual' : f.is_virtual,
+      }))
+      setQuickFillInput('')
+      toast.success('Form filled from your paste — review the details below before saving')
+    } catch {
+      setQuickFillError('Something went wrong reading those details. Try again or fill the form manually.')
+    } finally {
+      setQuickFilling(false)
+    }
   }
 
   const addSpeaker = () => set('speakers', [...form.speakers, { name: '', title: '', bio: '' }])
@@ -164,6 +214,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
       checkin_config: {
         ...(form.checkin_whatsapp_url    ? { whatsapp_url:    form.checkin_whatsapp_url }    : {}),
         ...(form.checkin_welcome_message ? { welcome_message: form.checkin_welcome_message } : {}),
+        ...(form.checkin_success_message ? { success_message: form.checkin_success_message } : {}),
         fields: form.checkin_fields,
       },
     }
@@ -194,12 +245,16 @@ export default function EventForm({ initialValues, eventId, customFields, initia
     if (!eventId && form.channels.length > 0) {
       setGenerating(true)
       try {
-        await fetch(`/api/events/${savedId}/generate`, {
+        const genRes = await fetch(`/api/events/${savedId}/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ channels: form.channels }),
         })
-        toast.success('Event created and content generated')
+        if (genRes.ok) {
+          toast.success('Event created and content generated')
+        } else {
+          toast.error('Event created, but content generation failed. Try again from the Content page.')
+        }
       } catch {
         toast.error('Event created, but content generation failed. Try again from the Content page.')
       }
@@ -220,6 +275,40 @@ export default function EventForm({ initialValues, eventId, customFields, initia
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm whitespace-pre-line">
           {error}
+        </div>
+      )}
+
+      {/* Quick fill from paste or URL (create only) */}
+      {!eventId && (
+        <div className="bg-sage-50/60 rounded-xl border border-sage-200 p-4 sm:p-6 space-y-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">✨ Quick Fill</h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Paste event details in any format — an email, a flyer, meeting notes — or a link to an
+              event page (Luma, Eventbrite, …). AI reads it and fills the form below.
+            </p>
+          </div>
+          <textarea
+            value={quickFillInput}
+            onChange={(e) => setQuickFillInput(e.target.value)}
+            rows={4}
+            placeholder={'Join us for the Spring Alumni Mixer!\nThursday May 21, 6-8pm at Optimism Brewing, 1158 Broadway, Seattle\nFree entry, first drink on us…\n\n…or paste a URL: https://lu.ma/your-event'}
+            className={inputClass}
+            disabled={quickFilling}
+          />
+          {quickFillError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {quickFillError}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleQuickFill}
+            disabled={quickFilling || !quickFillInput.trim()}
+            className="px-4 py-2 text-sm font-medium text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
+          >
+            {quickFilling ? 'Reading details…' : 'Fill Form with AI'}
+          </button>
         </div>
       )}
 
@@ -251,7 +340,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
               { id: 'partnered' as const, label: 'Partnered',  hint: 'Co-hosted with another org' },
               { id: 'external' as const,  label: 'External',   hint: "Attending a 3rd-party event" },
             ].map((c) => (
-              <label key={c.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.category === c.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`} title={c.hint}>
+              <label key={c.id} className={`relative cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.category === c.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`} title={c.hint}>
                 <input type="radio" name="category" value={c.id} checked={form.category === c.id} onChange={() => set('category', c.id)} className="sr-only" />
                 {c.label}
               </label>
@@ -311,7 +400,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
               { id: 'virtual' as const, label: 'Virtual' },
               { id: 'hybrid' as const, label: 'Hybrid' },
             ].map((m) => (
-              <label key={m.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.event_mode === m.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <label key={m.id} className={`relative cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.event_mode === m.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 <input type="radio" name="event_mode" value={m.id} checked={form.event_mode === m.id} onChange={() => { set('event_mode', m.id); set('is_virtual', m.id === 'virtual') }} className="sr-only" />
                 {m.label}
               </label>
@@ -445,7 +534,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
           <label className={labelClass}>Tone</label>
           <div className="flex gap-3">
             {TONE_OPTIONS.map((t) => (
-              <label key={t.id} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border text-sm ${form.tone === t.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
+              <label key={t.id} className={`relative flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border text-sm ${form.tone === t.id ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
                 <input type="radio" name="tone" value={t.id} checked={form.tone === t.id} onChange={() => set('tone', t.id)} className="sr-only" />
                 {t.label}
               </label>
@@ -460,7 +549,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
           <label className={labelClass}>Generate content for</label>
           <div className="flex flex-wrap gap-2 mt-1">
             {CHANNEL_OPTIONS.map((ch) => (
-              <label key={ch.id} className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.channels.includes(ch.id) ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+              <label key={ch.id} className={`relative cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${form.channels.includes(ch.id) ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                 <input type="checkbox" checked={form.channels.includes(ch.id)} onChange={() => toggleChannel(ch.id)} className="sr-only" />
                 {ch.label}
               </label>
@@ -514,6 +603,17 @@ export default function EventForm({ initialValues, eventId, customFields, initia
             placeholder="Welcome! Fill this out to get your wristband."
             className={inputClass}
           />
+        </div>
+        <div>
+          <label className={labelClass}>Success Message (optional)</label>
+          <textarea
+            value={form.checkin_success_message}
+            onChange={(e) => set('checkin_success_message', e.target.value)}
+            rows={2}
+            placeholder="Show this screen to an organizer to get your wristband."
+            className={inputClass}
+          />
+          <p className="text-xs text-gray-400 mt-1">Shown on the confirmation screen after a successful check-in.</p>
         </div>
         <div>
           <label className={labelClass}>Check-in Form Fields</label>

@@ -18,6 +18,7 @@ interface EventRow {
   checkin_config: {
     whatsapp_url?: string
     welcome_message?: string
+    success_message?: string
     fields?: TemplateField[]
   } | null
   org_name: string
@@ -74,7 +75,7 @@ export default async function CheckInPage({ params }: Params) {
           </div>
         )}
 
-        <CheckInForm eventId={eventId} whatsappUrl={config.whatsapp_url} fields={fields} />
+        <CheckInForm eventId={eventId} whatsappUrl={config.whatsapp_url} successMessage={config.success_message} fields={fields} />
 
         <p className="text-xs text-gray-400 text-center mt-8">
           Powered by Quorum

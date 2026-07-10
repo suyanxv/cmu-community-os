@@ -7,10 +7,11 @@ import type { TemplateField } from '@/lib/ai'
 interface CheckInFormProps {
   eventId: string
   whatsappUrl?: string
+  successMessage?: string  // per-event message on the confirmation screen
   fields: TemplateField[]  // dynamic fields (beyond name/email, which are always shown)
 }
 
-export default function CheckInForm({ eventId, whatsappUrl, fields }: CheckInFormProps) {
+export default function CheckInForm({ eventId, whatsappUrl, successMessage, fields }: CheckInFormProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [responses, setResponses] = useState<Record<string, string>>({})
@@ -65,7 +66,7 @@ export default function CheckInForm({ eventId, whatsappUrl, fields }: CheckInFor
           <p className="text-gray-600 text-sm">
             {alreadyCheckedIn
               ? 'Nice to see you again, enjoy the event.'
-              : 'Show this screen to an organizer to get your wristband.'}
+              : successMessage || 'Show this screen to an organizer to get your wristband.'}
           </p>
         </div>
 

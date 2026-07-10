@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { TemplateField, TemplateFieldType } from '@/lib/ai'
 
 interface CheckInFieldsEditorProps {
@@ -39,6 +40,19 @@ function slugify(label: string): string {
 }
 
 export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsEditorProps) {
+  // Fields this org used on previous events — offered as one-click adds so
+  // organizers don't retype the same fields for every event.
+  const [pastFields, setPastFields] = useState<TemplateField[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/organizations/checkin-fields')
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then(({ data }) => { if (!cancelled && Array.isArray(data)) setPastFields(data) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
   const updateField = <K extends keyof TemplateField>(i: number, key: K, value: TemplateField[K]) => {
     const updated = [...fields]
     updated[i] = { ...updated[i], [key]: value }
@@ -69,6 +83,10 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
   }
 
   const availablePresets = PRESET_FIELDS.filter((p) => !fields.some((f) => f.id === p.id))
+  // Past fields not already in the form and not duplicating a built-in preset
+  const availablePastFields = pastFields.filter(
+    (p) => !fields.some((f) => f.id === p.id) && !PRESET_FIELDS.some((b) => b.id === p.id)
+  )
 
   return (
     <div className="space-y-3">
@@ -138,18 +156,13 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
                   />
                   Required
                 </label>
-                {field.type === 'select' && (
-                  <input
-                    type="text"
-                    value={(field.options ?? []).join(', ')}
-                    onChange={(e) =>
-                      updateField(i, 'options', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))
-                    }
-                    placeholder="Option 1, Option 2, Option 3"
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-sage-500"
-                  />
-                )}
               </div>
+              {field.type === 'select' && (
+                <OptionsEditor
+                  options={field.options ?? []}
+                  onChange={(opts) => updateField(i, 'options', opts)}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -180,6 +193,78 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
           </>
         )}
       </div>
+
+      {availablePastFields.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500">From your past events:</span>
+          {availablePastFields.map((field) => (
+            <button
+              key={field.id}
+              type="button"
+              onClick={() => addPreset(field)}
+              className="text-xs border border-sage-200 bg-sage-50/60 px-2 py-0.5 rounded-full hover:border-sage-300 hover:bg-sage-50"
+              title={`${TYPE_LABELS[field.type]}${field.required ? ', required' : ''}`}
+            >
+              + {field.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Pill-style editor for dropdown options. Each option is its own entry, so
+// option text can contain any character — including commas.
+function OptionsEditor({ options, onChange }: { options: string[]; onChange: (opts: string[]) => void }) {
+  const [draft, setDraft] = useState('')
+
+  const commit = () => {
+    const value = draft.trim()
+    if (!value) return
+    if (!options.includes(value)) onChange([...options, value])
+    setDraft('')
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {options.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {options.map((opt, i) => (
+            <span
+              key={`${opt}-${i}`}
+              className="inline-flex items-center gap-1.5 bg-stone-100 border border-gray-200 rounded-full pl-2.5 pr-1.5 py-0.5 text-xs text-gray-700"
+            >
+              {opt}
+              <button
+                type="button"
+                onClick={() => onChange(options.filter((_, idx) => idx !== i))}
+                className="text-gray-400 hover:text-red-600"
+                aria-label={`Remove option ${opt}`}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault() // keep Enter from submitting the event form
+            commit()
+          } else if (e.key === 'Backspace' && !draft && options.length > 0) {
+            onChange(options.slice(0, -1))
+          }
+        }}
+        onBlur={commit}
+        placeholder={options.length === 0 ? 'Type an option and press Enter' : 'Add another option…'}
+        className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-sage-500"
+      />
+      <p className="text-[11px] text-gray-400">Press Enter after each option. Backspace on an empty box removes the last one.</p>
     </div>
   )
 }

@@ -98,7 +98,7 @@ export default function ContentPage() {
             return (
               <label
                 key={ch}
-                className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${
+                className={`relative cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${
                   existing
                     ? 'border-green-200 bg-green-50 text-green-700'
                     : selectedChannels.includes(ch)
