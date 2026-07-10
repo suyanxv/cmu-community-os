@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { QrCode, Download, Link as LinkIcon, ClipboardList, X } from 'lucide-react'
+import { QrCode, Download, Link as LinkIcon, ClipboardList, Printer, X } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 interface CheckInCardProps {
@@ -72,6 +72,14 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
           className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
         >
           <Download className="w-4 h-4" strokeWidth={1.75} /> Download PNG
+        </a>
+        <a
+          href={`/print/events/${eventId}/checkin-poster`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
+        >
+          <Printer className="w-4 h-4" strokeWidth={1.75} /> Print Poster
         </a>
         <button
           onClick={copyLink}

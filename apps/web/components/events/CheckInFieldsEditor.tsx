@@ -74,6 +74,17 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
     onChange([...fields, preset])
   }
 
+  // Hide a past-event field from suggestions permanently (org-wide).
+  // Optimistic: remove locally, fire-and-forget the persist call.
+  const dismissPastField = (id: string) => {
+    setPastFields((prev) => prev.filter((f) => f.id !== id))
+    fetch('/api/organizations/checkin-fields', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    }).catch(() => {})
+  }
+
   const addCustom = () => {
     const label = 'New field'
     onChange([
@@ -198,15 +209,28 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-gray-500">From your past events:</span>
           {availablePastFields.map((field) => (
-            <button
+            <span
               key={field.id}
-              type="button"
-              onClick={() => addPreset(field)}
-              className="text-xs border border-sage-200 bg-sage-50/60 px-2 py-0.5 rounded-full hover:border-sage-300 hover:bg-sage-50"
-              title={`${TYPE_LABELS[field.type]}${field.required ? ', required' : ''}`}
+              className="inline-flex items-center text-xs border border-sage-200 bg-sage-50/60 rounded-full overflow-hidden"
             >
-              + {field.label}
-            </button>
+              <button
+                type="button"
+                onClick={() => addPreset(field)}
+                className="pl-2 pr-1 py-0.5 hover:bg-sage-50"
+                title={`${TYPE_LABELS[field.type]}${field.required ? ', required' : ''}`}
+              >
+                + {field.label}
+              </button>
+              <button
+                type="button"
+                onClick={() => dismissPastField(field.id)}
+                className="pl-0.5 pr-1.5 py-0.5 text-gray-400 hover:text-red-600"
+                aria-label={`Remove ${field.label} from suggestions`}
+                title="Remove from suggestions"
+              >
+                ✕
+              </button>
+            </span>
           ))}
         </div>
       )}

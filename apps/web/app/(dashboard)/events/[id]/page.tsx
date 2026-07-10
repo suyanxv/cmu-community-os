@@ -3,14 +3,11 @@ import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
 import BroadcastsSection from '@/components/events/BroadcastsSection'
-import CancelEventButton from '@/components/events/CancelEventButton'
 import CheckInCard from '@/components/events/CheckInCard'
-import DeleteEventButton from '@/components/events/DeleteEventButton'
-import DuplicateEventButton from '@/components/events/DuplicateEventButton'
+import EventActionsMenu from '@/components/events/EventActionsMenu'
 import EventPartnersSection from '@/components/events/EventPartnersSection'
 import EventStatusControl from '@/components/events/EventStatusControl'
 import GenerateRemindersButton from '@/components/reminders/GenerateRemindersButton'
-import ShareEventButton from '@/components/events/ShareEventButton'
 import { FileText, Ticket, Bell } from 'lucide-react'
 import { formatEventDate } from '@/lib/dates'
 
@@ -93,50 +90,24 @@ export default async function EventDetailPage({ params }: Params) {
         </div>
       </div>
 
-      {/* Action bar — always wraps onto its own line(s) on mobile */}
+      {/* Action bar — primary action + everything else behind Actions */}
       <div className="flex items-center gap-2 flex-wrap mb-6">
         <Link href={`/events/${id}/content`} className="inline-flex items-center px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 font-medium">
           {hasContent ? 'View Content' : 'Add Content'}
         </Link>
-        <Link href={`/events/${id}/edit`} className="inline-flex items-center px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50">
-          Edit
-        </Link>
-        <GenerateRemindersButton eventId={id} />
-        <DuplicateEventButton eventId={id} />
-        <ShareEventButton eventId={id} />
-        {/* Draft → Delete (never published, nothing lost).
-            Published / Past → Cancel (preserve audit trail).
-            Cancelled → Delete (already communicated; admin can now purge).
-            Archived → no destructive action surfaced here. */}
-        {event.status === 'draft' || event.status === 'cancelled' ? (
-          <DeleteEventButton eventId={id} eventName={event.name} status={event.status as string} />
-        ) : event.status === 'published' || event.status === 'past' ? (
-          <CancelEventButton eventId={id} eventName={event.name} />
-        ) : null}
+        <EventActionsMenu eventId={id} eventName={event.name as string} status={event.status as string} />
       </div>
 
-      {/* Quick stats */}
-      <CapacityStats rsvpCount={event.rsvp_count} totalGuests={event.total_guests} maxCapacity={event.max_capacity} channels={event.channels as string[]} />
-
-      {/* Quick links */}
+      {/* Overview cards — each one IS the link to the page it summarizes */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <Link href={`/events/${id}/content`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <FileText className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
-          <p className="font-medium text-gray-900">Generated Content</p>
-          <p className="text-sm text-gray-500 mt-1">
-            {hasContent ? `${content.length} channels ready` : 'Not generated yet'}
-          </p>
-        </Link>
-        <Link href={`/events/${id}/rsvps`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <Ticket className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
-          <p className="font-medium text-gray-900">RSVP Management</p>
-          <p className="text-sm text-gray-500 mt-1">{event.rsvp_count} confirmed</p>
-        </Link>
-        <Link href={`/reminders?event_id=${id}`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all">
-          <Bell className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
-          <p className="font-medium text-gray-900">Reminders</p>
-          <p className="text-sm text-gray-500 mt-1">View & manage tasks</p>
-        </Link>
+        <RsvpCard
+          eventId={id}
+          rsvpCount={event.rsvp_count}
+          totalGuests={event.total_guests}
+          maxCapacity={event.max_capacity}
+        />
+        <ContentCard eventId={id} channels={event.channels as string[]} readyCount={content.length} />
+        <RemindersCard eventId={id} />
       </div>
 
       {/* Event details */}
@@ -158,16 +129,16 @@ interface SpeakerEntry { name?: string; title?: string; bio?: string }
 interface SponsorEntry { name?: string; tier?: string }
 interface HostEntry { user_id: string; full_name: string | null; email: string; avatar_url: string | null; title: string | null }
 
-function CapacityStats({
+function RsvpCard({
+  eventId,
   rsvpCount,
   totalGuests,
   maxCapacity,
-  channels,
 }: {
+  eventId: string
   rsvpCount: number
   totalGuests: number
   maxCapacity: number | null
-  channels: string[]
 }) {
   const pct = maxCapacity && maxCapacity > 0
     ? Math.min(100, Math.round((totalGuests / maxCapacity) * 100))
@@ -179,30 +150,59 @@ function CapacityStats({
     : 'bg-sage-500'
 
   return (
-    <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
-      <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
-        <p className="text-[11px] sm:text-sm text-gray-500">Confirmed RSVPs</p>
-        <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{rsvpCount}</p>
-        {maxCapacity && (
-          <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">of {maxCapacity}</p>
-        )}
-      </div>
-      <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
-        <p className="text-[11px] sm:text-sm text-gray-500">Total Guests</p>
-        <div className="flex items-baseline gap-1 sm:gap-2 mt-1">
-          <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalGuests}</p>
-          {pct !== null && <p className={`text-xs sm:text-sm font-medium ${pct >= 100 ? 'text-red-500' : pct >= 80 ? 'text-butter-700' : 'text-sage-700'}`}>{pct}%</p>}
+    <Link href={`/events/${eventId}/rsvps`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all min-w-0">
+      <Ticket className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
+      <p className="font-medium text-gray-900">RSVPs</p>
+      <div className="flex items-baseline gap-4 mt-2">
+        <div>
+          <p className="text-2xl font-bold text-gray-900 leading-none">{rsvpCount}</p>
+          <p className="text-xs text-gray-500 mt-1">confirmed{maxCapacity ? ` of ${maxCapacity}` : ''}</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-gray-900 leading-none">{totalGuests}</p>
+          <p className="text-xs text-gray-500 mt-1">total guests</p>
         </div>
         {pct !== null && (
-          <div className="h-1 sm:h-1.5 bg-stone-100 rounded-full overflow-hidden mt-2">
-            <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
-          </div>
+          <p className={`text-sm font-medium ml-auto ${pct >= 100 ? 'text-red-500' : pct >= 80 ? 'text-butter-700' : 'text-sage-700'}`}>{pct}%</p>
         )}
       </div>
-      <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 min-w-0">
-        <p className="text-[11px] sm:text-sm text-gray-500">Channels</p>
-        <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{channels.length}</p>
-        <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">{channels.join(', ') || 'None'}</p>
+      {pct !== null && (
+        <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden mt-3">
+          <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
+        </div>
+      )}
+    </Link>
+  )
+}
+
+function ContentCard({ eventId, channels, readyCount }: { eventId: string; channels: string[]; readyCount: number }) {
+  return (
+    <Link href={`/events/${eventId}/content`} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-sage-300 hover:shadow-sm transition-all min-w-0">
+      <FileText className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
+      <p className="font-medium text-gray-900">Content</p>
+      <div className="flex items-baseline gap-4 mt-2">
+        <div>
+          <p className="text-2xl font-bold text-gray-900 leading-none">{readyCount}</p>
+          <p className="text-xs text-gray-500 mt-1">{readyCount === 1 ? 'channel ready' : 'channels ready'}</p>
+        </div>
+      </div>
+      <p className="text-xs text-gray-400 mt-3 truncate">
+        {channels.length > 0 ? channels.join(', ') : 'No channels selected'}
+      </p>
+    </Link>
+  )
+}
+
+function RemindersCard({ eventId }: { eventId: string }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-5 min-w-0 flex flex-col">
+      <Link href={`/reminders?event_id=${eventId}`} className="group flex-1 -m-5 p-5 mb-0 rounded-t-xl hover:bg-stone-50/60 transition-colors">
+        <Bell className="w-5 h-5 text-sage-600 mb-2" strokeWidth={1.75} />
+        <p className="font-medium text-gray-900 group-hover:text-sage-700">Reminders</p>
+        <p className="text-sm text-gray-500 mt-1">View & manage tasks</p>
+      </Link>
+      <div className="mt-4 pt-3 border-t border-gray-100">
+        <GenerateRemindersButton eventId={eventId} />
       </div>
     </div>
   )
