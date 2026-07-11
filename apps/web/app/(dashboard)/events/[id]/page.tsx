@@ -107,7 +107,7 @@ export default async function EventDetailPage({ params }: Params) {
           maxCapacity={event.max_capacity}
         />
         <ContentCard eventId={id} channels={event.channels as string[]} readyCount={content.length} />
-        <RemindersCard eventId={id} />
+        <RemindersCard eventId={id} status={event.status as string} />
       </div>
 
       {/* Event details */}
@@ -193,7 +193,9 @@ function ContentCard({ eventId, channels, readyCount }: { eventId: string; chann
   )
 }
 
-function RemindersCard({ eventId }: { eventId: string }) {
+function RemindersCard({ eventId, status }: { eventId: string; status: string }) {
+  // Suggesting a prep schedule only makes sense before the event happens.
+  const canSuggest = status !== 'past' && status !== 'cancelled' && status !== 'archived'
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 min-w-0 flex flex-col">
       <Link href={`/reminders?event_id=${eventId}`} className="group flex-1 -m-5 p-5 mb-0 rounded-t-xl hover:bg-stone-50/60 transition-colors">
@@ -201,9 +203,11 @@ function RemindersCard({ eventId }: { eventId: string }) {
         <p className="font-medium text-gray-900 group-hover:text-sage-700">Reminders</p>
         <p className="text-sm text-gray-500 mt-1">View & manage tasks</p>
       </Link>
-      <div className="mt-4 pt-3 border-t border-gray-100">
-        <GenerateRemindersButton eventId={eventId} />
-      </div>
+      {canSuggest && (
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <GenerateRemindersButton eventId={eventId} />
+        </div>
+      )}
     </div>
   )
 }

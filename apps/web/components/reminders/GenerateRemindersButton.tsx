@@ -197,13 +197,15 @@ export default function GenerateRemindersButton({ eventId }: { eventId: string }
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={saveSelected}
-                  disabled={saving || selectedCount === 0 || loading}
-                  className="px-4 py-2 text-sm text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
-                >
-                  {saving ? 'Saving…' : `Add ${selectedCount} Reminder${selectedCount === 1 ? '' : 's'}`}
-                </button>
+                {!loading && (
+                  <button
+                    onClick={saveSelected}
+                    disabled={saving || selectedCount === 0}
+                    className="px-4 py-2 text-sm text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
+                  >
+                    {saving ? 'Saving…' : `Add ${selectedCount} Reminder${selectedCount === 1 ? '' : 's'}`}
+                  </button>
+                )}
               </div>
             </div>
           </div>

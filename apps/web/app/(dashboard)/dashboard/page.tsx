@@ -101,7 +101,18 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-5">
           <SectionHeader title="Up next" href="/events" linkLabel="All events" />
           {nextEvents.length === 0 ? (
-            <EmptyHint emoji="📅" text="No upcoming events. Create one to get started." actionHref="/events/new" actionLabel="New Event" />
+            <div className="text-center py-6">
+              <p className="text-3xl mb-2">📅</p>
+              <p className="text-sm text-gray-500">No upcoming events.</p>
+              <div className="flex items-center justify-center gap-4 mt-3">
+                <Link href="/events/new" className="text-sm text-sage-700 hover:text-sage-800 font-medium">
+                  New Event →
+                </Link>
+                <Link href="/events?tab=past" className="text-sm text-sage-700 hover:text-sage-800 font-medium">
+                  Duplicate a past event →
+                </Link>
+              </div>
+            </div>
           ) : (
             <div className="space-y-2">
               {nextEvents.map((ev) => {

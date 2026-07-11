@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Ban, Check, ChevronDown, Copy, Pencil, Share2, Trash2 } from 'lucide-react'
+import { Archive, Ban, Check, ChevronDown, Copy, Pencil, Share2, Trash2 } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 interface EventActionsMenuProps {
@@ -22,7 +22,7 @@ export default function EventActionsMenu({ eventId, eventName, status }: EventAc
   const [open, setOpen] = useState(false)
   const [working, setWorking] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [confirming, setConfirming] = useState<'delete' | 'cancel' | null>(null)
+  const [confirming, setConfirming] = useState<'delete' | 'cancel' | 'archive' | null>(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
   const [confirmError, setConfirmError] = useState<string | null>(null)
 
@@ -85,35 +85,41 @@ export default function EventActionsMenu({ eventId, eventName, status }: EventAc
     router.refresh()
   }
 
-  const handleCancel = async () => {
+  const setStatus = async (newStatus: 'cancelled' | 'archived', doneMessage: string) => {
     setConfirmBusy(true)
     setConfirmError(null)
     const res = await fetch(`/api/events/${eventId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'cancelled' }),
+      body: JSON.stringify({ status: newStatus }),
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      setConfirmError(data.error ?? 'Failed to cancel')
+      setConfirmError(data.error ?? 'Failed to update event')
       setConfirmBusy(false)
       return
     }
-    toast.success(`"${eventName}" cancelled`)
+    toast.success(doneMessage)
     setConfirming(null)
     setConfirmBusy(false)
     router.refresh()
   }
 
+  const handleCancel = () => setStatus('cancelled', `"${eventName}" cancelled`)
+  const handleArchive = () => setStatus('archived', `"${eventName}" archived`)
+
   // Draft → Delete (never published, nothing lost).
-  // Published / Past → Cancel (preserve audit trail).
+  // Published → Cancel (preserve audit trail, calendar shows struck-through).
+  // Past → Archive (it happened; "cancelling" it would be nonsense).
   // Cancelled → Delete (already communicated; admin can now purge).
   // Archived → no destructive action surfaced here.
   const destructive = status === 'draft' || status === 'cancelled'
     ? 'delete'
-    : status === 'published' || status === 'past'
+    : status === 'published'
       ? 'cancel'
-      : null
+      : status === 'past'
+        ? 'archive'
+        : null
 
   const itemClass = 'w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-left text-gray-700 hover:bg-stone-50 disabled:opacity-50'
   const isDraft = status === 'draft'
@@ -148,11 +154,15 @@ export default function EventActionsMenu({ eventId, eventName, status }: EventAc
               <button
                 role="menuitem"
                 onClick={() => { setOpen(false); setConfirming(destructive) }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-left text-red-600 hover:bg-red-50"
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-left ${
+                  destructive === 'archive' ? 'text-gray-700 hover:bg-stone-50' : 'text-red-600 hover:bg-red-50'
+                }`}
               >
                 {destructive === 'delete'
                   ? <><Trash2 className="w-4 h-4" strokeWidth={1.75} /> Delete</>
-                  : <><Ban className="w-4 h-4" strokeWidth={1.75} /> Cancel event</>}
+                  : destructive === 'archive'
+                    ? <><Archive className="w-4 h-4 text-gray-400" strokeWidth={1.75} /> Archive</>
+                    : <><Ban className="w-4 h-4" strokeWidth={1.75} /> Cancel event</>}
               </button>
             </>
           )}
@@ -188,6 +198,36 @@ export default function EventActionsMenu({ eventId, eventName, status }: EventAc
                 className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
                 {confirmBusy ? 'Deleting…' : isDraft ? 'Delete draft' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirming === 'archive' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Archive this event?</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                <span className="font-medium">{eventName}</span> will be hidden from your event lists and calendar. RSVPs, check-ins, content, and history are all preserved.
+              </p>
+            </div>
+            {confirmError && <p className="text-sm text-red-600">{confirmError}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirming(null)}
+                disabled={confirmBusy}
+                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50 disabled:opacity-50"
+              >
+                Keep event
+              </button>
+              <button
+                onClick={handleArchive}
+                disabled={confirmBusy}
+                className="px-4 py-2 text-sm text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
+              >
+                {confirmBusy ? 'Archiving…' : 'Archive event'}
               </button>
             </div>
           </div>

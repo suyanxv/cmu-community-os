@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { CalendarDays, MapPin, Video, Users as UsersIcon, Trash2, X, CheckSquare, LayoutGrid, List as ListIcon, Columns3 } from 'lucide-react'
 import { formatEventDate, localToday } from '@/lib/dates'
 import { useToast } from '@/components/ui/Toast'
+import SearchInput from '@/components/ui/SearchInput'
 import EventsCalendar from '@/components/events/EventsCalendar'
 import EventsYearView from '@/components/events/EventsYearView'
 
@@ -47,8 +48,13 @@ const TABS: { id: FilterTab; label: string }[] = [
 export default function EventsList({ events }: { events: EventRow[] }) {
   const router = useRouter()
   const toast = useToast()
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
-  const [tab, setTab] = useState<FilterTab>('all')
+  // Allow deep-linking a tab (e.g. /events?tab=past from the dashboard)
+  const [tab, setTab] = useState<FilterTab>(() => {
+    const t = searchParams.get('tab')
+    return TABS.some((x) => x.id === t) ? (t as FilterTab) : 'all'
+  })
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
@@ -202,18 +208,12 @@ export default function EventsList({ events }: { events: EventRow[] }) {
 
       {/* Search + tabs + select */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-md">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search events by name, location, channel…"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-500"
-          />
-        </div>
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search events by name, location, channel…"
+          className="flex-1 max-w-md"
+        />
         <div className="flex gap-1 bg-stone-100 p-1 rounded-lg w-fit">
           {TABS.map((t) => (
             <button

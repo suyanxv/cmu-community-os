@@ -245,7 +245,47 @@ export default function RsvpPage() {
           <p className="text-gray-500">No RSVPs yet. Add one above or import a CSV.</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
+        <>
+        {/* Mobile: stacked cards (the table squeezes names into unreadable columns) */}
+        <div className="sm:hidden space-y-3">
+          {rsvps.map((r) => (
+            <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{r.name}</p>
+                  {r.email && <p className="text-xs text-gray-500 truncate mt-0.5">{r.email}</p>}
+                </div>
+                <button
+                  onClick={() => deleteRsvp(r.id, r.name)}
+                  className="text-gray-300 hover:text-red-600 p-1 -m-1 shrink-0"
+                  aria-label={`Delete RSVP for ${r.name}`}
+                >
+                  <X className="w-4 h-4" strokeWidth={2} />
+                </button>
+              </div>
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                <select
+                  value={r.status}
+                  onChange={(e) => updateStatus(r.id, e.target.value)}
+                  className={`text-xs px-2 py-1 rounded-full border font-medium ${
+                    r.status === 'confirmed' ? 'bg-green-50 border-green-200 text-green-700' :
+                    r.status === 'waitlist' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
+                    'bg-red-50 border-red-200 text-red-700'
+                  }`}
+                >
+                  <option value="confirmed">Confirmed</option>
+                  <option value="waitlist">Waitlist</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <span className="text-xs text-gray-500">{r.guest_count} guest{r.guest_count === 1 ? '' : 's'}</span>
+                <AttendanceCell checkInAt={r.check_in_at} status={r.status} isPastEvent={isPastEvent} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-xl overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-stone-50 border-b border-gray-200">
               <tr>
@@ -298,6 +338,7 @@ export default function RsvpPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )

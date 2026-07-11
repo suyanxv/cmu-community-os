@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '@/lib/db'
 import { redirect } from 'next/navigation'
@@ -144,7 +145,10 @@ export default async function EventsPage() {
           </Link>
         </div>
       ) : (
-        <EventsList events={rows} />
+        // Suspense boundary: EventsList reads ?tab= via useSearchParams
+        <Suspense>
+          <EventsList events={rows} />
+        </Suspense>
       )}
     </div>
   )

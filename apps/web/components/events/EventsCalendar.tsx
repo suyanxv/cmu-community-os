@@ -64,6 +64,30 @@ export default function EventsCalendar({ events }: { events: CalEvent[] }) {
 
   const monthLabel = first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
+  // When the viewed month is empty but other months have events, offer a jump
+  // to the nearest one — otherwise the calendar looks like there's no data.
+  const nearestMonthWithEvents = useMemo(() => {
+    const counts = new Map<number, number>() // key: year*12+month
+    for (const e of events) {
+      const d = new Date(e.event_date + 'T00:00:00')
+      const key = d.getFullYear() * 12 + d.getMonth()
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    const viewKey = viewYear * 12 + viewMonth
+    if (counts.has(viewKey) || counts.size === 0) return null
+    let best: number | null = null
+    for (const key of counts.keys()) {
+      if (best === null || Math.abs(key - viewKey) < Math.abs(best - viewKey)) best = key
+    }
+    if (best === null) return null
+    return {
+      year: Math.floor(best / 12),
+      month: best % 12,
+      count: counts.get(best)!,
+      label: new Date(Math.floor(best / 12), best % 12, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    }
+  }, [events, viewYear, viewMonth])
+
   const goPrev = () => {
     if (viewMonth === 0) { setViewYear(viewYear - 1); setViewMonth(11) }
     else setViewMonth(viewMonth - 1)
@@ -91,6 +115,18 @@ export default function EventsCalendar({ events }: { events: CalEvent[] }) {
           </button>
         </div>
       </div>
+
+      {nearestMonthWithEvents && (
+        <div className="mb-3 flex items-center gap-2 bg-sage-50 border border-sage-200 rounded-lg px-4 py-2.5 text-sm text-sage-800">
+          <span>No events in {monthLabel.split(' ')[0]}.</span>
+          <button
+            onClick={() => { setViewYear(nearestMonthWithEvents.year); setViewMonth(nearestMonthWithEvents.month) }}
+            className="font-medium underline hover:text-sage-900"
+          >
+            {nearestMonthWithEvents.count} event{nearestMonthWithEvents.count === 1 ? '' : 's'} in {nearestMonthWithEvents.label} →
+          </button>
+        </div>
+      )}
 
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
         {/* Weekday header */}

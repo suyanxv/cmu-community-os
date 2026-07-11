@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ContentCard from '@/components/events/ContentCard'
 import { CardListSkeleton } from '@/components/ui/Skeleton'
@@ -19,6 +19,9 @@ const ALL_CHANNELS = ['whatsapp', 'email', 'instagram', 'linkedin', 'luma']
 
 export default function ContentPage() {
   const { id: eventId } = useParams<{ id: string }>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const autogenFired = useRef(false)
   const [content, setContent] = useState<ContentRow[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -38,6 +41,19 @@ export default function ContentPage() {
   }, [eventId])
 
   useEffect(() => { fetchContent() }, [fetchContent])
+
+  // Arriving from "Create & Generate Content": the form redirects here with
+  // ?autogen=<channels> instead of blocking on the AI call itself. Kick off
+  // generation once, then strip the param so a refresh doesn't regenerate.
+  useEffect(() => {
+    const autogen = searchParams.get('autogen')
+    if (!autogen || autogenFired.current) return
+    autogenFired.current = true
+    const channels = autogen.split(',').filter((c) => ALL_CHANNELS.includes(c))
+    router.replace(`/events/${eventId}/content`, { scroll: false })
+    if (channels.length > 0) generateContent(channels)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const generateContent = async (channels: string[]) => {
     setGenerating(true)
@@ -124,7 +140,7 @@ export default function ContentPage() {
       </div>
 
       {/* Content cards */}
-      {loading ? (
+      {loading || (generating && content.length === 0) ? (
         <CardListSkeleton count={3} />
       ) : content.length === 0 ? (
         <div className="text-center py-12">

@@ -121,7 +121,6 @@ export default function EventForm({ initialValues, eventId, customFields, initia
   const [form, setForm] = useState<EventFormData>({ ...defaultValues, ...initialValues })
   const [customValues, setCustomValues] = useState<Record<string, unknown>>(initialCustomValues ?? {})
   const [saving, setSaving] = useState(false)
-  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickFillInput, setQuickFillInput] = useState('')
   const [quickFilling, setQuickFilling] = useState(false)
@@ -240,25 +239,12 @@ export default function EventForm({ initialValues, eventId, customFields, initia
     const data = await res.json()
     const savedId = eventId ?? data.data.id
 
-    // Auto-generate content for the selected channels (fire and forget on edit,
-    // awaited on create so the user lands on the content page with it ready)
+    // On create with channels selected, land on the content page immediately —
+    // it kicks off generation itself (via ?autogen=) and shows its own loading
+    // state, instead of blocking this form for the ~10s the AI call takes.
     if (!eventId && form.channels.length > 0) {
-      setGenerating(true)
-      try {
-        const genRes = await fetch(`/api/events/${savedId}/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channels: form.channels }),
-        })
-        if (genRes.ok) {
-          toast.success('Event created and content generated')
-        } else {
-          toast.error('Event created, but content generation failed. Try again from the Content page.')
-        }
-      } catch {
-        toast.error('Event created, but content generation failed. Try again from the Content page.')
-      }
-      router.push(`/events/${savedId}/content`)
+      toast.success('Event created — generating content')
+      router.push(`/events/${savedId}/content?autogen=${form.channels.join(',')}`)
       return
     }
 
@@ -647,16 +633,14 @@ export default function EventForm({ initialValues, eventId, customFields, initia
         </button>
         <button
           type="submit"
-          disabled={saving || generating}
+          disabled={saving}
           className="px-6 py-2 text-sm font-medium text-white bg-sage-600 rounded-lg hover:bg-sage-700 disabled:opacity-50"
         >
-          {generating
-            ? 'Generating content…'
-            : saving
-              ? 'Saving…'
-              : eventId
-                ? 'Save Changes'
-                : 'Create & Generate Content'}
+          {saving
+            ? 'Saving…'
+            : eventId
+              ? 'Save Changes'
+              : 'Create & Generate Content'}
         </button>
       </div>
     </form>
