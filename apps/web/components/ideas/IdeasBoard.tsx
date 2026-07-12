@@ -1,10 +1,20 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lightbulb, Plus, Sparkles, Archive, Trash2, ArrowUpRight, Check, X } from 'lucide-react'
+import { Lightbulb, Plus, Sparkles, Archive, Trash2, ArrowUpRight, Check, Inbox, X } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
+
+interface AttendeeSuggestion {
+  key: string
+  text: string
+  question: string
+  attendee_name: string
+  event_id: string
+  event_name: string
+  event_date: string
+}
 
 type Status = 'open' | 'planning' | 'promoted' | 'archived'
 
@@ -50,6 +60,39 @@ export default function IdeasBoard({ initialIdeas }: { initialIdeas: Idea[] }) {
   const [newNotes, setNewNotes] = useState('')
   const [newSeason, setNewSeason] = useState('')
   const [creating, setCreating] = useState(false)
+  const [suggestions, setSuggestions] = useState<AttendeeSuggestion[]>([])
+  const [suggestionBusy, setSuggestionBusy] = useState<string | null>(null)
+
+  // Attendee suggestions harvested from check-in answers
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/ideas/suggestions')
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then(({ data }) => { if (!cancelled && Array.isArray(data)) setSuggestions(data) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  const handleSuggestion = async (s: AttendeeSuggestion, action: 'promote' | 'dismiss') => {
+    setSuggestionBusy(s.key)
+    const res = await fetch('/api/ideas/suggestions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: s.key, action }),
+    })
+    setSuggestionBusy(null)
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({}))
+      toast.error(error ?? `Failed to ${action} suggestion`)
+      return
+    }
+    setSuggestions((prev) => prev.filter((x) => x.key !== s.key))
+    if (action === 'promote') {
+      const { data } = await res.json()
+      setIdeas((prev) => [{ ...data, event_id: null, event_name: null, event_status: null, created_by_name: null, tags: data.tags ?? [] } as Idea, ...prev])
+      toast.success('Added to your Ideas backlog')
+    }
+  }
 
   const visible = useMemo(() => {
     return ideas.filter((i) => {
@@ -150,6 +193,51 @@ export default function IdeasBoard({ initialIdeas }: { initialIdeas: Idea[] }) {
       <p className="text-sm text-gray-500 mb-5 max-w-2xl">
         A backlog for events you want to run someday. Capture the title plus whatever context matters (venue leads, contacts, seasonality). Promote an idea to a draft event when you&apos;re ready to commit.
       </p>
+
+      {/* Attendee suggestions inbox — answers to "what events do you want?"
+          check-in questions, routed here instead of rotting in JSONB. */}
+      {suggestions.length > 0 && (
+        <div className="bg-sage-50/60 border border-sage-200 rounded-xl p-4 mb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Inbox className="w-4 h-4 text-sage-700" strokeWidth={1.75} />
+            <h2 className="text-sm font-semibold text-gray-900">From your attendees</h2>
+            <span className="text-xs text-gray-500">{suggestions.length}</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            What attendees said they want at check-in. Add the good ones to your backlog.
+          </p>
+          <div className="space-y-2">
+            {suggestions.map((s) => (
+              <div key={s.key} className="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-900">&ldquo;{s.text}&rdquo;</p>
+                  <p className="text-xs text-gray-400 mt-1 truncate">
+                    {s.attendee_name} · {s.event_name}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => handleSuggestion(s, 'promote')}
+                    disabled={suggestionBusy === s.key}
+                    className="inline-flex items-center gap-1 text-xs bg-sage-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-sage-700 disabled:opacity-50 font-medium"
+                  >
+                    <Plus className="w-3.5 h-3.5" strokeWidth={2} /> Add idea
+                  </button>
+                  <button
+                    onClick={() => handleSuggestion(s, 'dismiss')}
+                    disabled={suggestionBusy === s.key}
+                    className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-50"
+                    aria-label="Dismiss suggestion"
+                    title="Dismiss"
+                  >
+                    <X className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg w-fit mb-4">
