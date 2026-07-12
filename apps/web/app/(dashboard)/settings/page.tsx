@@ -6,6 +6,7 @@ import { OrganizationProfile } from '@clerk/nextjs'
 import { History, ArrowUpRight } from 'lucide-react'
 import type { TemplateField } from '@/lib/ai'
 import { useToast } from '@/components/ui/Toast'
+import AppearanceSection from '@/components/AppearanceSection'
 import TeamSection from '@/components/TeamSection'
 import ReminderTemplatesEditor from '@/components/ReminderTemplatesEditor'
 import PermissionsReference from '@/components/PermissionsReference'
@@ -80,6 +81,15 @@ export default function SettingsPage() {
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+
+      {/* Appearance */}
+      <div className={sectionClass}>
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Appearance</h2>
+          <p className="text-sm text-gray-500 mt-1">Color mode and accent theme for this device.</p>
+        </div>
+        <AppearanceSection />
+      </div>
 
       {/* Event Form Template */}
       <div className={sectionClass}>

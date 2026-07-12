@@ -29,10 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       {/* suppressHydrationWarning: the theme script below may add .dark before React hydrates */}
       <html lang="en" className="h-full antialiased" suppressHydrationWarning>
         <head>
-          {/* Apply the stored theme before first paint to avoid a light flash */}
+          {/* Apply the stored theme + accent before first paint to avoid a flash */}
           <script
             dangerouslySetInnerHTML={{
-              __html: `try{var t=localStorage.getItem('quorum-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`,
+              __html: `try{var t=localStorage.getItem('quorum-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}var a=localStorage.getItem('quorum-accent');if(a&&/^[a-z]+$/.test(a)&&a!=='sage'){document.documentElement.classList.add('theme-'+a)}}catch(e){}`,
             }}
           />
         </head>

@@ -3,6 +3,73 @@
 :root {
   --background: #fafaf7;  /* warm off-white with a green-cream tint */
   --foreground: #1c1f1a;
+
+  /* Accent scale — "sage" utilities resolve to these vars, so switching
+     the accent theme is just overriding this block (see .theme-* below).
+     Default: Sage, a muted earthy green. */
+  --sage-50:  #f3f7f0;
+  --sage-100: #e3ecdd;
+  --sage-200: #c6d8bb;
+  --sage-300: #a3bf93;
+  --sage-400: #85a76f;
+  --sage-500: #6a8d55;
+  --sage-600: #547143;
+  --sage-700: #445a38;
+  --sage-800: #374830;
+  --sage-900: #2e3c2a;
+}
+
+/* Accent themes — applied as a class on <html> alongside .dark */
+.theme-ocean {
+  --sage-50:  #eff6f9;
+  --sage-100: #dcebf1;
+  --sage-200: #b8d6e2;
+  --sage-300: #8fbccd;
+  --sage-400: #67a0b6;
+  --sage-500: #4a86a0;
+  --sage-600: #3a6b82;
+  --sage-700: #305668;
+  --sage-800: #294653;
+  --sage-900: #233a45;
+}
+
+.theme-plum {
+  --sage-50:  #f7f3f9;
+  --sage-100: #ece2f0;
+  --sage-200: #d8c4e1;
+  --sage-300: #bfa0cd;
+  --sage-400: #a67eb8;
+  --sage-500: #8d61a2;
+  --sage-600: #734d85;
+  --sage-700: #5d3f6b;
+  --sage-800: #4c3457;
+  --sage-900: #3f2c48;
+}
+
+.theme-clay {
+  --sage-50:  #faf3ef;
+  --sage-100: #f3e2d8;
+  --sage-200: #e6c4b2;
+  --sage-300: #d5a086;
+  --sage-400: #c47f5f;
+  --sage-500: #ad6544;
+  --sage-600: #8d5036;
+  --sage-700: #71412d;
+  --sage-800: #5c3627;
+  --sage-900: #4b2d21;
+}
+
+.theme-slate {
+  --sage-50:  #f4f6f8;
+  --sage-100: #e5eaee;
+  --sage-200: #c9d3db;
+  --sage-300: #a6b6c3;
+  --sage-400: #8398aa;
+  --sage-500: #677d91;
+  --sage-600: #536577;
+  --sage-700: #445261;
+  --sage-800: #39444f;
+  --sage-900: #303941;
 }
 
 @theme inline {
@@ -11,17 +78,17 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Sage — muted, earthy green (primary brand color) */
-  --color-sage-50:  #f3f7f0;
-  --color-sage-100: #e3ecdd;
-  --color-sage-200: #c6d8bb;
-  --color-sage-300: #a3bf93;
-  --color-sage-400: #85a76f;
-  --color-sage-500: #6a8d55;
-  --color-sage-600: #547143;
-  --color-sage-700: #445a38;
-  --color-sage-800: #374830;
-  --color-sage-900: #2e3c2a;
+  /* Accent (brand) — indirected through :root so themes can swap it */
+  --color-sage-50:  var(--sage-50);
+  --color-sage-100: var(--sage-100);
+  --color-sage-200: var(--sage-200);
+  --color-sage-300: var(--sage-300);
+  --color-sage-400: var(--sage-400);
+  --color-sage-500: var(--sage-500);
+  --color-sage-600: var(--sage-600);
+  --color-sage-700: var(--sage-700);
+  --color-sage-800: var(--sage-800);
+  --color-sage-900: var(--sage-900);
 
   /* Pastel accent palette */
   --color-peach-50:    #fff4ec;
@@ -120,29 +187,31 @@ input, textarea, select {
     color-scheme: dark;
   }
 
-  /* Sage tints (brand) — solid sage-500/600 buttons stay as-is */
+  /* Accent tints — derived from the active theme's scale with color-mix,
+     so all accent themes get correct dark variants automatically.
+     Solid sage-500/600 buttons stay as-is. */
   .dark .bg-sage-50,
   .dark .bg-sage-50\/50,
   .dark .bg-sage-50\/60,
-  .dark .hover\:bg-sage-50:hover { background-color: #1f261c; }
+  .dark .hover\:bg-sage-50:hover { background-color: color-mix(in srgb, var(--sage-500) 12%, #151713); }
   .dark .bg-sage-100,
-  .dark .hover\:bg-sage-100:hover { background-color: #29331f; }
-  .dark .bg-sage-200            { background-color: #33402a; }
+  .dark .hover\:bg-sage-100:hover { background-color: color-mix(in srgb, var(--sage-500) 20%, #151713); }
+  .dark .bg-sage-200            { background-color: color-mix(in srgb, var(--sage-500) 28%, #151713); }
   .dark .border-sage-200,
-  .dark .hover\:border-sage-200:hover { border-color: #37452e; }
+  .dark .hover\:border-sage-200:hover { border-color: color-mix(in srgb, var(--sage-500) 32%, #1c1f1a); }
   .dark .border-sage-300,
-  .dark .hover\:border-sage-300:hover { border-color: #445437; }
+  .dark .hover\:border-sage-300:hover { border-color: color-mix(in srgb, var(--sage-500) 45%, #1c1f1a); }
   .dark .text-sage-600,
-  .dark .group-hover\:text-sage-600:hover { color: #85a76f; }
+  .dark .group-hover\:text-sage-600:hover { color: var(--sage-400); }
   .dark .text-sage-700,
   .dark .hover\:text-sage-700:hover,
   .dark .group-hover\:text-sage-700:hover,
   .dark .hover\:text-sage-800:hover,
-  .dark .hover\:text-sage-900:hover { color: #a3bf93; }
-  .dark .text-sage-800          { color: #c6d8bb; }
-  .dark .text-sage-800\/80      { color: #c6d8bbcc; }
-  .dark .ring-sage-100          { --tw-ring-color: #29331f; }
-  .dark .ring-sage-200          { --tw-ring-color: #37452e; }
+  .dark .hover\:text-sage-900:hover { color: var(--sage-300); }
+  .dark .text-sage-800          { color: var(--sage-200); }
+  .dark .text-sage-800\/80      { color: color-mix(in srgb, var(--sage-200) 80%, transparent); }
+  .dark .ring-sage-100          { --tw-ring-color: color-mix(in srgb, var(--sage-500) 20%, #151713); }
+  .dark .ring-sage-200          { --tw-ring-color: color-mix(in srgb, var(--sage-500) 32%, #151713); }
 
   /* Red / destructive */
   .dark .bg-red-50,
