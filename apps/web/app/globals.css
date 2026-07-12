@@ -130,60 +130,68 @@ input, textarea, select {
    check-in poster) always comes out light. */
 @media screen {
   .dark {
-    --background: #131512;
-    --foreground: #f1f2ee;
+    /* Dark surfaces carry a subtle tint of the ACTIVE accent (not a fixed
+       green), so switching themes re-tints the whole dark UI. */
+    --surf-page:   color-mix(in srgb, var(--sage-500) 5%, #111213);
+    --surf-card:   color-mix(in srgb, var(--sage-500) 7%, #17181a);
+    --surf-subtle: color-mix(in srgb, var(--sage-500) 9%, #1c1e20);
+    --surf-muted:  color-mix(in srgb, var(--sage-500) 11%, #212325);
+    --surf-strong: color-mix(in srgb, var(--sage-500) 13%, #2a2c2e);
+
+    --background: var(--surf-page);
+    --foreground: #f2f2f0;
     color-scheme: dark;
   }
 
   /* Surfaces */
   .dark body,
-  .dark .bg-stone-50            { background-color: #131512; }
-  .dark .bg-white               { background-color: #1c1f1a; }
-  .dark .hover\:bg-white:hover  { background-color: #262b23; }
+  .dark .bg-stone-50            { background-color: var(--surf-page); }
+  .dark .bg-white               { background-color: var(--surf-card); }
+  .dark .hover\:bg-white:hover  { background-color: var(--surf-muted); }
   .dark .bg-stone-50\/50,
   .dark .hover\:bg-stone-50:hover,
-  .dark .hover\:bg-stone-50\/60:hover { background-color: #22261f; }
+  .dark .hover\:bg-stone-50\/60:hover { background-color: var(--surf-subtle); }
   .dark .bg-stone-100,
   .dark .bg-gray-100,
   .dark .hover\:bg-stone-100:hover,
-  .dark .hover\:bg-gray-100:hover     { background-color: #262b23; }
-  .dark .bg-stone-200           { background-color: #2f3529; }
-  .dark .bg-stone-400           { background-color: #4a4f42; }
-  .dark .bg-gray-400            { background-color: #4a4f42; }
-  .dark .bg-gray-900            { background-color: #e4e6df; }
+  .dark .hover\:bg-gray-100:hover     { background-color: var(--surf-muted); }
+  .dark .bg-stone-200           { background-color: var(--surf-strong); }
+  .dark .bg-stone-400           { background-color: #4b4b48; }
+  .dark .bg-gray-400            { background-color: #4b4b48; }
+  .dark .bg-gray-900            { background-color: #e5e5e2; }
 
-  /* Text */
-  .dark .text-gray-900          { color: #f1f2ee; }
+  /* Text — neutral grays; the accent lives in surfaces and sage-* colors */
+  .dark .text-gray-900          { color: #f2f2f0; }
   .dark .text-gray-800,
-  .dark .hover\:text-gray-800:hover { color: #e4e6df; }
+  .dark .hover\:text-gray-800:hover { color: #e4e4e1; }
   .dark .text-gray-700,
   .dark .hover\:text-gray-700:hover,
-  .dark .hover\:text-gray-900:hover { color: #cfd2c8; }
+  .dark .hover\:text-gray-900:hover { color: #d0d0cc; }
   .dark .text-gray-600,
   .dark .hover\:text-gray-600:hover,
-  .dark .text-stone-600         { color: #a8ac9f; }
+  .dark .text-stone-600         { color: #a9a9a4; }
   .dark .text-gray-500,
-  .dark .text-stone-500         { color: #8b9080; }
-  .dark .text-gray-400          { color: #6b7060; }
-  .dark .text-gray-300          { color: #4a4f42; }
-  .dark ::placeholder           { color: #6b7060; }
+  .dark .text-stone-500         { color: #8c8c87; }
+  .dark .text-gray-400          { color: #6c6c66; }
+  .dark .text-gray-300          { color: #4b4b46; }
+  .dark ::placeholder           { color: #6c6c66; }
 
-  /* Borders */
+  /* Borders — mixed from the accent so they sit on the tinted surfaces */
   .dark .border-gray-100,
-  .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #262b23; }
+  .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--surf-muted); }
   .dark .border-gray-200,
-  .dark .border-stone-200       { border-color: #2c3128; }
+  .dark .border-stone-200       { border-color: color-mix(in srgb, var(--sage-500) 12%, #27282a); }
   .dark .border-gray-300,
-  .dark .hover\:border-gray-300:hover { border-color: #3a4034; }
-  .dark .border-white           { border-color: #1c1f1a; }
-  .dark .border-gray-900        { border-color: #e4e6df; }
+  .dark .hover\:border-gray-300:hover { border-color: color-mix(in srgb, var(--sage-500) 15%, #343537); }
+  .dark .border-white           { border-color: var(--surf-card); }
+  .dark .border-gray-900        { border-color: #e5e5e2; }
 
   /* Inputs (most rely on the UA's white default) */
   .dark input:not([type='checkbox']):not([type='radio']),
   .dark textarea,
   .dark select {
-    background-color: #22261f;
-    color: #f1f2ee;
+    background-color: var(--surf-subtle);
+    color: #f2f2f0;
     color-scheme: dark;
   }
 
@@ -193,14 +201,14 @@ input, textarea, select {
   .dark .bg-sage-50,
   .dark .bg-sage-50\/50,
   .dark .bg-sage-50\/60,
-  .dark .hover\:bg-sage-50:hover { background-color: color-mix(in srgb, var(--sage-500) 12%, #151713); }
+  .dark .hover\:bg-sage-50:hover { background-color: color-mix(in srgb, var(--sage-500) 14%, #141516); }
   .dark .bg-sage-100,
-  .dark .hover\:bg-sage-100:hover { background-color: color-mix(in srgb, var(--sage-500) 20%, #151713); }
-  .dark .bg-sage-200            { background-color: color-mix(in srgb, var(--sage-500) 28%, #151713); }
+  .dark .hover\:bg-sage-100:hover { background-color: color-mix(in srgb, var(--sage-500) 22%, #141516); }
+  .dark .bg-sage-200            { background-color: color-mix(in srgb, var(--sage-500) 30%, #141516); }
   .dark .border-sage-200,
-  .dark .hover\:border-sage-200:hover { border-color: color-mix(in srgb, var(--sage-500) 32%, #1c1f1a); }
+  .dark .hover\:border-sage-200:hover { border-color: color-mix(in srgb, var(--sage-500) 34%, #1a1b1c); }
   .dark .border-sage-300,
-  .dark .hover\:border-sage-300:hover { border-color: color-mix(in srgb, var(--sage-500) 45%, #1c1f1a); }
+  .dark .hover\:border-sage-300:hover { border-color: color-mix(in srgb, var(--sage-500) 47%, #1a1b1c); }
   .dark .text-sage-600,
   .dark .group-hover\:text-sage-600:hover { color: var(--sage-400); }
   .dark .text-sage-700,
@@ -210,8 +218,8 @@ input, textarea, select {
   .dark .hover\:text-sage-900:hover { color: var(--sage-300); }
   .dark .text-sage-800          { color: var(--sage-200); }
   .dark .text-sage-800\/80      { color: color-mix(in srgb, var(--sage-200) 80%, transparent); }
-  .dark .ring-sage-100          { --tw-ring-color: color-mix(in srgb, var(--sage-500) 20%, #151713); }
-  .dark .ring-sage-200          { --tw-ring-color: color-mix(in srgb, var(--sage-500) 32%, #151713); }
+  .dark .ring-sage-100          { --tw-ring-color: color-mix(in srgb, var(--sage-500) 22%, #141516); }
+  .dark .ring-sage-200          { --tw-ring-color: color-mix(in srgb, var(--sage-500) 34%, #141516); }
 
   /* Red / destructive */
   .dark .bg-red-50,
