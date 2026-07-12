@@ -5,6 +5,14 @@ import EventsYearView from '@/components/events/EventsYearView'
 
 type Params = { params: Promise<{ token: string }> }
 
+// ISR: public share pages are read-heavy and rarely edited — serve from
+// the edge cache, refresh in the background at most once a minute. The
+// empty generateStaticParams opts the route into on-demand static generation.
+export const revalidate = 60
+export function generateStaticParams() {
+  return []
+}
+
 interface PublicEvent {
   id: string
   name: string

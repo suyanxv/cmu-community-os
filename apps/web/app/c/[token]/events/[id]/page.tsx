@@ -6,6 +6,12 @@ import { ArrowLeft, Calendar, MapPin, Video, Clock, ExternalLink } from 'lucide-
 
 type Params = { params: Promise<{ token: string; id: string }> }
 
+// ISR: same policy as the parent share page — edge-cached, 60s refresh.
+export const revalidate = 60
+export function generateStaticParams() {
+  return []
+}
+
 // Public read-only event detail. Accessed via the org's share token.
 // Shows only information the org has explicitly published — no RSVP rolls,
 // no internal notes, no partner contact info.

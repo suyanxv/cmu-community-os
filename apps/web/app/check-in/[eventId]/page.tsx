@@ -6,6 +6,16 @@ import { formatEventDate } from '@/lib/dates'
 
 type Params = { params: Promise<{ eventId: string }> }
 
+// ISR: serve from the edge cache and refresh in the background at most
+// once a minute. This page gets hammered by QR scans at the event door —
+// config edits (welcome message, fields) may lag by up to 60s, which is fine.
+// The empty generateStaticParams opts the dynamic segment into static
+// generation with on-demand params — without it the route stays fully SSR.
+export const revalidate = 60
+export function generateStaticParams() {
+  return []
+}
+
 interface EventRow {
   id: string
   name: string
