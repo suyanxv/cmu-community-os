@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { OrganizationSwitcher, UserButton } from '@clerk/nextjs'
 import { ToastProvider } from '@/components/ui/Toast'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 import {
   Home,
   CalendarDays,
@@ -71,7 +72,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 p-3 space-y-1">{navLinks}</nav>
         <div className="p-4 border-t border-gray-200 flex items-center gap-3">
           <UserButton />
-          <span className="text-sm text-gray-500">Account</span>
+          <span className="text-sm text-gray-500 flex-1">Account</span>
+          <ThemeToggle />
         </div>
       </aside>
 
@@ -114,7 +116,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <nav className="flex-1 p-3 space-y-1">{navLinks}</nav>
               <div className="p-4 border-t border-gray-200 flex items-center gap-3">
                 <UserButton />
-                <span className="text-sm text-gray-500">Account</span>
+                <span className="text-sm text-gray-500 flex-1">Account</span>
+                <ThemeToggle />
               </div>
             </aside>
           </div>
