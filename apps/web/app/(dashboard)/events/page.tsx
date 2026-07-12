@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
-import { sql } from '@/lib/db'
+import { sql, sqlBatch } from '@/lib/db'
 import { redirect } from 'next/navigation'
 import EventsList from '@/components/events/EventsList'
 
@@ -40,7 +40,7 @@ export default async function EventsPage() {
   // Auto-mark events past their end date as 'past' (idempotent).
   // Cancelled events stay cancelled so they can be visually flagged without being
   // silently reclassified as 'past'.
-  await sql`
+  const bumpPastStatuses = () => sql`
     UPDATE events
     SET status = 'past', updated_at = NOW()
     WHERE org_id = ${orgId}
@@ -58,7 +58,11 @@ export default async function EventsPage() {
   // if event_hosts doesn't exist yet (pre-migration) the query still succeeds.
   let rows: EventRow[] = []
   try {
-    rows = (await sql`
+    // One HTTP round trip: the status bump runs before the SELECT inside a
+    // single transaction, so the list reflects the updated statuses.
+    const [, listRows] = await sqlBatch([
+      bumpPastStatuses(),
+      sql`
       SELECT
         id, name, status, category, co_hosts,
         to_char(event_date, 'YYYY-MM-DD') AS event_date,
@@ -79,7 +83,9 @@ export default async function EventsPage() {
       WHERE org_id = ${orgId} AND status != 'archived'
       ORDER BY event_date DESC
       LIMIT 100
-    `).map((r) => ({
+    `,
+    ])
+    rows = listRows.map((r) => ({
       ...r,
       event_date: toIsoDate(r.event_date),
       effective_end_date: toIsoDate(r.effective_end_date),
@@ -89,7 +95,9 @@ export default async function EventsPage() {
       hosts: Array.isArray(r.hosts) ? r.hosts : [],
     })) as EventRow[]
   } catch {
-    // Fallback: event_hosts table missing, fetch without it
+    // Fallback: event_hosts table missing, fetch without it.
+    // The batched transaction rolled back, so rerun the status bump first.
+    await bumpPastStatuses().catch(() => {})
     rows = (await sql`
       SELECT
         id, name, status, category, co_hosts,

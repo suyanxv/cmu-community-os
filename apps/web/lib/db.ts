@@ -17,3 +17,13 @@ export function sql(strings: TemplateStringsArray, ...values: unknown[]): Promis
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return getClient()(strings, ...values) as Promise<any[]>
 }
+
+// Run several queries in ONE HTTP round trip, sequentially inside a single
+// transaction — later queries see earlier queries' writes. Pass unawaited
+// sql`` calls; Neon's queries are lazy until awaited, so handing them to
+// transaction() executes them there instead.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function sqlBatch(queries: Promise<any[]>[]): Promise<any[][]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return getClient().transaction(queries as any) as Promise<any[][]>
+}
