@@ -194,7 +194,7 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
         disabled={saving}
         className="w-full bg-sage-600 text-white px-5 py-3.5 rounded-xl font-medium text-base hover:bg-sage-700 disabled:opacity-50 transition-colors"
       >
-        {saving ? 'Checking in…' : 'Check In'}
+        {saving ? 'Submitting…' : 'Submit'}
       </button>
     </form>
   )
