@@ -104,14 +104,14 @@ export default function AttendancePage() {
 
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Survey Responses</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Live list of checked-in attendees. Updates every 10 seconds.
+            Live list of survey responses. Updates every 10 seconds.
           </p>
         </div>
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-3xl font-bold text-sage-700">{attendees.length}</span>
-          <span className="text-sm text-gray-500">checked in</span>
+          <span className="text-sm text-gray-500">responses</span>
           {(() => {
             const rsvped = attendees.filter((a) => hadPriorRsvp(a.source)).length
             const walkIns = attendees.length - rsvped
@@ -164,9 +164,9 @@ export default function AttendancePage() {
       ) : attendees.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-4xl mb-3">📋</p>
-          <p className="text-lg font-medium text-gray-900">No check-ins yet</p>
+          <p className="text-lg font-medium text-gray-900">No responses yet</p>
           <p className="text-sm text-gray-500 mt-1">
-            Share the QR code from the event page so attendees can check themselves in.
+            Share the QR code or link from the event page so attendees can fill out the survey.
           </p>
         </div>
       ) : filtered.length === 0 ? (

@@ -29,7 +29,7 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
   const copyLink = async () => {
     const url = checkInUrl || buildUrl()
     await navigator.clipboard.writeText(url)
-    toast.success('Check-in link copied')
+    toast.success('Survey link copied')
   }
 
   const showQr = () => {
@@ -41,15 +41,15 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
     <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 mt-6">
       <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Check-in</h2>
+          <h2 className="text-base font-semibold text-gray-900">Post-Event Survey</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Attendees scan the QR code to sign in and join the WhatsApp community.
+            Attendees scan the QR code to share feedback and join the WhatsApp community.
           </p>
         </div>
         <div className="flex items-center gap-4 text-right">
           <div>
             <p className="text-2xl font-bold text-sage-700">{checkedInCount}</p>
-            <p className="text-xs text-gray-500">checked in</p>
+            <p className="text-xs text-gray-500">responses</p>
           </div>
           {rsvpCount > 0 && (
             <div>
@@ -91,7 +91,7 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
           href={`/events/${eventId}/check-in`}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-stone-50"
         >
-          <ClipboardList className="w-4 h-4" strokeWidth={1.75} /> Attendance
+          <ClipboardList className="w-4 h-4" strokeWidth={1.75} /> Responses
         </Link>
       </div>
 
@@ -100,7 +100,7 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Check-in QR</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Survey QR</h3>
                 <p className="text-xs text-gray-500 mt-0.5 break-all">{checkInUrl}</p>
               </div>
               <button onClick={() => setQrOpen(false)} className="p-1 text-gray-400 hover:text-gray-600" aria-label="Close">
@@ -113,7 +113,7 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/api/events/${eventId}/qr?size=600`}
-                alt="Check-in QR code"
+                alt="Survey QR code"
                 className="w-full h-auto"
               />
             </div>

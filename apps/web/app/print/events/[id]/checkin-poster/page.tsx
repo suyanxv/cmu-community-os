@@ -52,15 +52,15 @@ export default async function CheckInPosterPage({ params }: Params) {
         {locationLine && <p className="text-base text-gray-500 mt-1">{locationLine}</p>}
 
         <div className="mt-10 mb-8">
-          <p className="text-2xl font-semibold text-gray-900">Welcome! Please check in</p>
-          <p className="text-lg text-gray-600 mt-1">by scanning this QR code</p>
+          <p className="text-2xl font-semibold text-gray-900">How was it?</p>
+          <p className="text-lg text-gray-600 mt-1">Scan this QR code to take our quick post-event survey</p>
         </div>
 
         <div className="border-4 border-gray-900 rounded-3xl p-6 bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/events/${id}/qr?size=800`}
-            alt="Check-in QR code"
+            alt="Survey QR code"
             className="w-72 h-72 sm:w-80 sm:h-80"
           />
         </div>

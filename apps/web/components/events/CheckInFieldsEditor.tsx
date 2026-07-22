@@ -104,7 +104,7 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
     <div className="space-y-3">
       <div>
         <p className="text-xs text-gray-500">
-          Name and email are always collected. Add any additional fields to capture at check-in.
+          Name and email are always collected. Add the questions you want attendees to answer.
         </p>
       </div>
 
@@ -170,10 +170,21 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
                 </label>
               </div>
               {(field.type === 'select' || field.type === 'multiselect') && (
-                <OptionsEditor
-                  options={field.options ?? []}
-                  onChange={(opts) => updateField(i, 'options', opts)}
-                />
+                <>
+                  <OptionsEditor
+                    options={field.options ?? []}
+                    onChange={(opts) => updateField(i, 'options', opts)}
+                  />
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={field.allow_other ?? false}
+                      onChange={(e) => updateField(i, 'allow_other', e.target.checked)}
+                      className="h-3.5 w-3.5"
+                    />
+                    Include an &ldquo;Other&rdquo; choice with a write-in text box
+                  </label>
+                </>
               )}
             </div>
           </div>

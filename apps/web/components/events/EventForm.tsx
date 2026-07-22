@@ -565,9 +565,9 @@ export default function EventForm({ initialValues, eventId, customFields, initia
 
       {/* Check-in */}
       <div className={sectionClass}>
-        <h2 className="text-base font-semibold text-gray-900">Day-of Check-in</h2>
+        <h2 className="text-base font-semibold text-gray-900">Post-Event Survey</h2>
         <p className="text-xs text-gray-500 -mt-2">
-          Attendees scan a QR code at the event to check themselves in. The QR is generated automatically — configure what they see below.
+          Attendees scan a QR code to fill out the survey. The QR is generated automatically — configure what they see below.
         </p>
         <div>
           <label className={labelClass}>WhatsApp Community Link (optional)</label>
@@ -586,7 +586,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
             value={form.checkin_welcome_message}
             onChange={(e) => set('checkin_welcome_message', e.target.value)}
             rows={2}
-            placeholder="Welcome! Fill this out to get your wristband."
+            placeholder="Thanks for coming! Tell us how it went."
             className={inputClass}
           />
         </div>
@@ -596,13 +596,13 @@ export default function EventForm({ initialValues, eventId, customFields, initia
             value={form.checkin_success_message}
             onChange={(e) => set('checkin_success_message', e.target.value)}
             rows={2}
-            placeholder="Show this screen to an organizer to get your wristband."
+            placeholder="Your response has been recorded — thank you!"
             className={inputClass}
           />
           <p className="text-xs text-gray-400 mt-1">Shown on the confirmation screen after a successful check-in.</p>
         </div>
         <div>
-          <label className={labelClass}>Check-in Form Fields</label>
+          <label className={labelClass}>Survey Questions</label>
           <CheckInFieldsEditor
             fields={form.checkin_fields}
             onChange={(v) => set('checkin_fields', v)}

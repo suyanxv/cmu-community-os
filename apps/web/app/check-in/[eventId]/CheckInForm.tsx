@@ -11,10 +11,15 @@ interface CheckInFormProps {
   fields: TemplateField[]  // dynamic fields (beyond name/email, which are always shown)
 }
 
+// Sentinel for the "Other" choice while the form is being edited; replaced
+// with the write-in text at submit time.
+const OTHER = '__other__'
+
 export default function CheckInForm({ eventId, whatsappUrl, successMessage, fields }: CheckInFormProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [responses, setResponses] = useState<Record<string, string | string[]>>({})
+  const [otherTexts, setOtherTexts] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -35,32 +40,52 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
       return { ...prev, [id]: next }
     })
 
+  // Swap the Other sentinel for the write-in text (dropped when blank).
+  const resolveOther = (fieldId: string, v: string): string | null => {
+    if (v !== OTHER) return v
+    const text = (otherTexts[fieldId] ?? '').trim()
+    return text || null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    // HTML can't enforce "required" on a checkbox group — validate here.
-    const missing = fields.find((f) => {
-      if (f.type !== 'multiselect' || !f.required) return false
-      const v = responses[f.id]
-      return !Array.isArray(v) || v.length === 0
-    })
-    if (missing) {
-      setError(`Please select at least one option for "${missing.label}"`)
-      return
-    }
-
-    setSaving(true)
-
-    // Strip empty responses so we don't pollute the JSONB
+    // Resolve Other write-ins and strip empty responses in one pass.
     const cleaned: Record<string, string | string[]> = {}
     for (const [k, v] of Object.entries(responses)) {
       if (Array.isArray(v)) {
-        if (v.length > 0) cleaned[k] = v
+        const resolved = v
+          .map((item) => resolveOther(k, item))
+          .filter((item): item is string => !!item)
+        if (resolved.length > 0) cleaned[k] = resolved
       } else if (v && v.trim()) {
-        cleaned[k] = v.trim()
+        const resolved = resolveOther(k, v.trim())
+        if (resolved) cleaned[k] = resolved
       }
     }
+
+    // Validate what HTML can't: required checkbox groups, and a chosen
+    // "Other" whose text box was left empty.
+    for (const f of fields) {
+      const raw = responses[f.id]
+      const pickedOtherWithoutText =
+        (Array.isArray(raw) ? raw.includes(OTHER) : raw === OTHER) &&
+        !(otherTexts[f.id] ?? '').trim()
+      if (pickedOtherWithoutText) {
+        setError(`Please fill in the "Other" box for "${f.label}"`)
+        return
+      }
+      if (f.type === 'multiselect' && f.required) {
+        const v = cleaned[f.id]
+        if (!Array.isArray(v) || v.length === 0) {
+          setError(`Please select at least one option for "${f.label}"`)
+          return
+        }
+      }
+    }
+
+    setSaving(true)
 
     const res = await fetch(`/api/check-in/${eventId}`, {
       method: 'POST',
@@ -70,7 +95,7 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
     setSaving(false)
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      setError(data.error ?? 'Something went wrong. Please try again or check in with an organizer.')
+      setError(data.error ?? 'Something went wrong. Please try again or let an organizer know.')
       return
     }
     const { data } = await res.json()
@@ -86,12 +111,12 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
             <Check className="w-8 h-8 text-white" strokeWidth={3} />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            {alreadyCheckedIn ? 'Already checked in!' : 'You\'re checked in!'}
+            {alreadyCheckedIn ? 'Response updated!' : 'Thanks for your feedback!'}
           </h2>
           <p className="text-gray-600 text-sm">
             {alreadyCheckedIn
-              ? 'Nice to see you again, enjoy the event.'
-              : successMessage || 'Show this screen to an organizer to get your wristband.'}
+              ? 'We already had a response from you, so we merged in your new answers.'
+              : successMessage || 'Your response has been recorded.'}
           </p>
         </div>
 
@@ -113,10 +138,11 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
             setName('')
             setEmail('')
             setResponses({})
+            setOtherTexts({})
           }}
           className="mt-3 text-sm text-gray-500 hover:text-gray-700"
         >
-          Check in someone else
+          Submit another response
         </button>
       </div>
     )
@@ -128,9 +154,10 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
 
     if (field.type === 'multiselect') {
       const selected = Array.isArray(raw) ? raw : []
+      const choices = [...(field.options ?? []), ...(field.allow_other ? [OTHER] : [])]
       return (
         <div className="space-y-2">
-          {(field.options ?? []).map((opt) => (
+          {choices.map((opt) => (
             <label
               key={opt}
               className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-colors ${
@@ -145,9 +172,19 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
                 onChange={() => toggleMultiResponse(field.id, opt)}
                 className="h-4 w-4 accent-[var(--sage-600)]"
               />
-              <span className="text-base text-gray-900">{opt}</span>
+              <span className="text-base text-gray-900">{opt === OTHER ? 'Other' : opt}</span>
             </label>
           ))}
+          {field.allow_other && selected.includes(OTHER) && (
+            <input
+              type="text"
+              value={otherTexts[field.id] ?? ''}
+              onChange={(e) => setOtherTexts((prev) => ({ ...prev, [field.id]: e.target.value }))}
+              placeholder="Tell us more…"
+              autoFocus
+              className={inputClass}
+            />
+          )}
         </div>
       )
     }
@@ -167,17 +204,30 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
 
     if (field.type === 'select') {
       return (
-        <select
-          required={field.required}
-          value={value}
-          onChange={(e) => setResponse(field.id, e.target.value)}
-          className={inputClass}
-        >
-          <option value="">Select…</option>
-          {(field.options ?? []).map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
+        <div className="space-y-2">
+          <select
+            required={field.required}
+            value={value}
+            onChange={(e) => setResponse(field.id, e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select…</option>
+            {(field.options ?? []).map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+            {field.allow_other && <option value={OTHER}>Other…</option>}
+          </select>
+          {field.allow_other && value === OTHER && (
+            <input
+              type="text"
+              value={otherTexts[field.id] ?? ''}
+              onChange={(e) => setOtherTexts((prev) => ({ ...prev, [field.id]: e.target.value }))}
+              placeholder="Tell us more…"
+              autoFocus
+              className={inputClass}
+            />
+          )}
+        </div>
       )
     }
 

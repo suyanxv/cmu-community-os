@@ -412,6 +412,7 @@ export interface TemplateField {
   required: boolean
   placeholder?: string
   options?: string[]  // for select / multiselect types
+  allow_other?: boolean // select/multiselect: offer an "Other" choice with a free-text box
   help?: string       // optional help text
 }
 
