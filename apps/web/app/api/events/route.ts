@@ -6,6 +6,7 @@ import { logActivity } from '@/lib/activity'
 import { errorResponse } from '@/lib/errors'
 import { applyReminderTemplates } from '@/lib/reminder-templates'
 import { syncEventCoHostLinks } from '@/lib/co-hosts'
+import { uniqueEventSlug } from '@/lib/slug'
 
 const CreateEventSchema = z.object({
   name: z.string().min(1),
@@ -77,15 +78,17 @@ export async function POST(req: NextRequest) {
     const endDate      = data.end_date      ? String(data.end_date).slice(0, 10) : null
     const rsvpDeadline = data.rsvp_deadline ? String(data.rsvp_deadline).slice(0, 10) : null
 
+    const slug = await uniqueEventSlug(data.name)
+
     const rows = await sql`
       INSERT INTO events (
-        org_id, created_by, name, event_date, end_date, start_time, end_time, timezone,
+        org_id, created_by, name, slug, event_date, end_date, start_time, end_time, timezone,
         location_name, location_address, location_url, is_virtual, event_mode,
         description, speakers, agenda, sponsors,
         tone, target_audience, channels, rsvp_link, rsvp_deadline, max_capacity,
         tags, notes, custom_fields, checkin_config, cover_emoji, category, co_hosts
       ) VALUES (
-        ${ctx.orgId}, ${ctx.userId}, ${data.name},
+        ${ctx.orgId}, ${ctx.userId}, ${data.name}, ${slug},
         ${eventDate}::date,
         ${endDate}::date,
         ${data.start_time}, ${data.end_time ?? null}, ${data.timezone},

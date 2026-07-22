@@ -110,7 +110,7 @@ export default async function EventDetailPage({ params }: Params) {
       <EventDetails event={event} />
 
       {/* Check-in */}
-      <CheckInCard eventId={id} checkedInCount={event.checked_in_count ?? 0} rsvpCount={event.rsvp_count ?? 0} />
+      <CheckInCard eventId={id} slug={event.slug as string | null} checkedInCount={event.checked_in_count ?? 0} rsvpCount={event.rsvp_count ?? 0} />
 
       {/* Broadcasts (email + WhatsApp) */}
       <BroadcastsSection eventId={id} eventName={event.name as string} />

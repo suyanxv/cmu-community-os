@@ -3,6 +3,7 @@ import { requireOrgMember } from '@/lib/auth'
 import { sql } from '@/lib/db'
 import { ApiError, errorResponse } from '@/lib/errors'
 import { logActivity } from '@/lib/activity'
+import { uniqueEventSlug } from '@/lib/slug'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -30,11 +31,11 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const tags = Array.isArray(idea.tags) ? idea.tags : []
     const events = await sql`
       INSERT INTO events (
-        org_id, created_by, name, event_date, start_time, timezone,
+        org_id, created_by, name, slug, event_date, start_time, timezone,
         is_virtual, event_mode, description, tone, channels,
         tags, category, status
       ) VALUES (
-        ${ctx.orgId}, ${ctx.userId}, ${idea.title},
+        ${ctx.orgId}, ${ctx.userId}, ${idea.title}, ${await uniqueEventSlug(idea.title)},
         CURRENT_DATE, '18:00', 'America/Los_Angeles',
         false, 'in_person', ${idea.notes ?? null}, 'professional-warm', ${['whatsapp', 'email']},
         ${tags}, 'internal', 'draft'

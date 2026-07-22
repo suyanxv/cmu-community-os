@@ -3,6 +3,7 @@ import { requireOrgMember } from '@/lib/auth'
 import { sql } from '@/lib/db'
 import { logActivity } from '@/lib/activity'
 import { ApiError, errorResponse } from '@/lib/errors'
+import { uniqueEventSlug } from '@/lib/slug'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -11,10 +12,15 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const ctx = await requireOrgMember()
     const { id: sourceId } = await params
 
+    // Resolve the source name first so the copy gets its own unique slug
+    const src = await sql`SELECT name FROM events WHERE id = ${sourceId} AND org_id = ${ctx.orgId}`
+    if (!src[0]) throw new ApiError(404, 'Event not found')
+    const slug = await uniqueEventSlug(`Copy of ${src[0].name}`)
+
     // Clone everything except RSVPs, generated content, reminders, timestamps
     const rows = await sql`
       INSERT INTO events (
-        org_id, created_by, name, status,
+        org_id, created_by, name, slug, status,
         event_date, end_date, start_time, end_time, timezone,
         location_name, location_address, location_url, is_virtual, event_mode,
         description, speakers, agenda, sponsors,
@@ -22,7 +28,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
         tags, notes, custom_fields
       )
       SELECT
-        org_id, ${ctx.userId}, 'Copy of ' || name, 'draft',
+        org_id, ${ctx.userId}, 'Copy of ' || name, ${slug}, 'draft',
         event_date, end_date, start_time, end_time, timezone,
         location_name, location_address, location_url, is_virtual, event_mode,
         description, speakers, agenda, sponsors,

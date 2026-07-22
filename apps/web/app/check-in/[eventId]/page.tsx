@@ -44,13 +44,16 @@ const DEFAULT_CHECKIN_FIELDS: TemplateField[] = [
 export default async function CheckInPage({ params }: Params) {
   const { eventId } = await params
 
+  // The URL segment can be a human slug ("annual-summer-beach-picnic") or a
+  // legacy uuid — both resolve, so QR codes printed before slugs existed
+  // keep working. id::text comparison avoids uuid cast errors on slugs.
   const rows = await sql`
     SELECT e.id, e.name, e.event_date, e.start_time, e.location_name,
            e.location_address, e.is_virtual, e.event_mode,
            e.checkin_config, o.name AS org_name
     FROM events e
     JOIN organizations o ON o.id = e.org_id
-    WHERE e.id = ${eventId} AND e.status != 'archived'
+    WHERE (e.slug = ${eventId} OR e.id::text = ${eventId}) AND e.status != 'archived'
   ` as EventRow[]
 
   const event = rows[0]

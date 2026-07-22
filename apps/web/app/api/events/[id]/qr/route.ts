@@ -20,14 +20,16 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     // Verify event belongs to org
     const rows = await sql`
-      SELECT name FROM events WHERE id = ${id} AND org_id = ${ctx.orgId}
+      SELECT name, slug FROM events WHERE id = ${id} AND org_id = ${ctx.orgId}
     `
     if (!rows[0]) throw new ApiError(404, 'Event not found')
     const eventName = rows[0].name as string
 
     const origin = process.env.NEXT_PUBLIC_APP_URL
       || `${req.nextUrl.protocol}//${req.nextUrl.host}`
-    const checkInUrl = `${origin}/check-in/${id}`
+    // Prefer the human-readable slug — random-looking uuid links make
+    // people hesitant to scan/click
+    const checkInUrl = `${origin}/check-in/${(rows[0].slug as string | null) ?? id}`
 
     const png = await QRCode.toBuffer(checkInUrl, {
       width: size,

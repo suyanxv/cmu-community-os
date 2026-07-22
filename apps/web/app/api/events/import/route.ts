@@ -6,6 +6,7 @@ import { parseBulkEvents } from '@/lib/ai'
 import { logActivity } from '@/lib/activity'
 import { errorResponse } from '@/lib/errors'
 import { applyReminderTemplates } from '@/lib/reminder-templates'
+import { uniqueEventSlug } from '@/lib/slug'
 
 // Simple in-memory rate limiter: 5 parses per org per hour (each call uses Sonnet)
 const parseLimits = new Map<string, { count: number; resetAt: number }>()
@@ -87,12 +88,12 @@ export async function PUT(req: NextRequest) {
 
       const rows = await sql`
         INSERT INTO events (
-          org_id, created_by, name, status,
+          org_id, created_by, name, slug, status,
           event_date, end_date, start_time, end_time, timezone,
           location_name, location_address, is_virtual, event_mode,
           description, max_capacity, tags
         ) VALUES (
-          ${ctx.orgId}, ${ctx.userId}, ${e.name}, ${status},
+          ${ctx.orgId}, ${ctx.userId}, ${e.name}, ${await uniqueEventSlug(e.name)}, ${status},
           ${normalizedEventDate}::date,
           ${normalizedEndDate}::date,
           ${e.start_time ?? null}, ${e.end_time ?? null}, ${e.timezone},

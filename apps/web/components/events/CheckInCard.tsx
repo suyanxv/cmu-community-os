@@ -7,11 +7,13 @@ import { useToast } from '@/components/ui/Toast'
 
 interface CheckInCardProps {
   eventId: string
+  /** Human-readable slug for the public URL; falls back to the uuid. */
+  slug?: string | null
   checkedInCount: number
   rsvpCount: number
 }
 
-export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: CheckInCardProps) {
+export default function CheckInCard({ eventId, slug, checkedInCount, rsvpCount }: CheckInCardProps) {
   const toast = useToast()
   const [qrOpen, setQrOpen] = useState(false)
   const [checkInUrl, setCheckInUrl] = useState<string>('')
@@ -19,7 +21,7 @@ export default function CheckInCard({ eventId, checkedInCount, rsvpCount }: Chec
   // Compute the URL on mount (client-only) so we don't need origin on server
   const buildUrl = () => {
     if (typeof window !== 'undefined') {
-      const url = `${window.location.origin}/check-in/${eventId}`
+      const url = `${window.location.origin}/check-in/${slug ?? eventId}`
       setCheckInUrl(url)
       return url
     }
