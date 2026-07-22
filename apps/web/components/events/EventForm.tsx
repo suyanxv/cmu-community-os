@@ -464,7 +464,7 @@ export default function EventForm({ initialValues, eventId, customFields, initia
             <CustomFieldRow
               key={field.id}
               field={field}
-              value={(customValues[field.id] ?? '') as string}
+              value={(customValues[field.id] ?? '') as string | string[]}
               onChange={(v) => setCustomValue(field.id, v)}
               inputClass={inputClass}
               labelClass={labelClass}
@@ -704,15 +704,40 @@ function EmojiPicker({ value, onChange }: { value: string; onChange: (v: string)
 
 interface CustomFieldRowProps {
   field: TemplateField
-  value: string
-  onChange: (v: string) => void
+  value: string | string[]
+  onChange: (v: string | string[]) => void
   inputClass: string
   labelClass: string
 }
 
-function CustomFieldRow({ field, value, onChange, inputClass, labelClass }: CustomFieldRowProps) {
+function CustomFieldRow({ field, value: rawValue, onChange, inputClass, labelClass }: CustomFieldRowProps) {
+  const value = typeof rawValue === 'string' ? rawValue : ''
   let input: React.ReactNode
-  if (field.type === 'textarea') {
+  if (field.type === 'multiselect') {
+    const selected = Array.isArray(rawValue) ? rawValue : []
+    input = (
+      <div className="flex flex-wrap gap-2">
+        {(field.options ?? []).map((opt) => (
+          <label
+            key={opt}
+            className={`relative cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium ${
+              selected.includes(opt) ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={selected.includes(opt)}
+              onChange={() =>
+                onChange(selected.includes(opt) ? selected.filter((o) => o !== opt) : [...selected, opt])
+              }
+              className="sr-only"
+            />
+            {opt}
+          </label>
+        ))}
+      </div>
+    )
+  } else if (field.type === 'textarea') {
     input = (
       <textarea
         required={field.required}

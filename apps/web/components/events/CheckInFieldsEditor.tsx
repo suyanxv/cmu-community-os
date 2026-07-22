@@ -20,14 +20,15 @@ const PRESET_FIELDS: TemplateField[] = [
 ]
 
 const TYPE_LABELS: Record<TemplateFieldType, string> = {
-  text:     'Short text',
-  textarea: 'Paragraph',
-  email:    'Email',
-  url:      'URL',
-  number:   'Number',
-  date:     'Date',
-  time:     'Time',
-  select:   'Dropdown',
+  text:        'Short text',
+  textarea:    'Paragraph',
+  email:       'Email',
+  url:         'URL',
+  number:      'Number',
+  date:        'Date',
+  time:        'Time',
+  select:      'Dropdown',
+  multiselect: 'Checkboxes (pick multiple)',
 }
 
 function slugify(label: string): string {
@@ -168,7 +169,7 @@ export default function CheckInFieldsEditor({ fields, onChange }: CheckInFieldsE
                   Required
                 </label>
               </div>
-              {field.type === 'select' && (
+              {(field.type === 'select' || field.type === 'multiselect') && (
                 <OptionsEditor
                   options={field.options ?? []}
                   onChange={(opts) => updateField(i, 'options', opts)}

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireOrgMember } from '@/lib/auth'
 import { sql } from '@/lib/db'
 import { errorResponse } from '@/lib/errors'
-import { fieldsById, isAffirmative, isVolunteerField } from '@/lib/checkin-insights'
+import { answerText, fieldsById, isAffirmative, isVolunteerField } from '@/lib/checkin-insights'
 import type { TemplateField } from '@/lib/ai'
 
 /**
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       for (const [fieldId, raw] of Object.entries(answers)) {
         const field = fields.get(fieldId)
         if (!field || !isVolunteerField(field)) continue
-        const answer = String(raw ?? '')
+        const answer = answerText(raw)
         if (isAffirmative(answer)) {
           volunteerByKey.set(row.key as string, {
             answer,

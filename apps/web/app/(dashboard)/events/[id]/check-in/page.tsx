@@ -11,7 +11,7 @@ interface CheckedInAttendee {
   email: string | null
   check_in_at: string
   source: string
-  check_in_data: Record<string, string | boolean> | null
+  check_in_data: Record<string, string | boolean | string[]> | null
   // Legacy columns still present; prefer check_in_data
   graduation_year: string | null
   school: string | null
@@ -76,6 +76,7 @@ export default function AttendancePage() {
     const fromJson = a.check_in_data?.[id]
     if (typeof fromJson === 'string') return fromJson
     if (typeof fromJson === 'boolean') return fromJson ? 'Yes' : 'No'
+    if (Array.isArray(fromJson)) return fromJson.join(', ')
     if (id === 'graduation_year' && a.graduation_year) return a.graduation_year
     if (id === 'school' && a.school) return a.school
     if (id === 'how_heard' && a.how_heard) return a.how_heard

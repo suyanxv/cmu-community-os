@@ -14,7 +14,7 @@ interface CheckInFormProps {
 export default function CheckInForm({ eventId, whatsappUrl, successMessage, fields }: CheckInFormProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [responses, setResponses] = useState<Record<string, string>>({})
+  const [responses, setResponses] = useState<Record<string, string | string[]>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -26,15 +26,40 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
   const setResponse = (id: string, value: string) =>
     setResponses((prev) => ({ ...prev, [id]: value }))
 
+  const toggleMultiResponse = (id: string, option: string) =>
+    setResponses((prev) => {
+      const current = Array.isArray(prev[id]) ? (prev[id] as string[]) : []
+      const next = current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option]
+      return { ...prev, [id]: next }
+    })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaving(true)
     setError(null)
 
-    // Strip empty-string responses so we don't pollute the JSONB
-    const cleaned: Record<string, string> = {}
+    // HTML can't enforce "required" on a checkbox group — validate here.
+    const missing = fields.find((f) => {
+      if (f.type !== 'multiselect' || !f.required) return false
+      const v = responses[f.id]
+      return !Array.isArray(v) || v.length === 0
+    })
+    if (missing) {
+      setError(`Please select at least one option for "${missing.label}"`)
+      return
+    }
+
+    setSaving(true)
+
+    // Strip empty responses so we don't pollute the JSONB
+    const cleaned: Record<string, string | string[]> = {}
     for (const [k, v] of Object.entries(responses)) {
-      if (v && v.trim()) cleaned[k] = v.trim()
+      if (Array.isArray(v)) {
+        if (v.length > 0) cleaned[k] = v
+      } else if (v && v.trim()) {
+        cleaned[k] = v.trim()
+      }
     }
 
     const res = await fetch(`/api/check-in/${eventId}`, {
@@ -98,7 +123,34 @@ export default function CheckInForm({ eventId, whatsappUrl, successMessage, fiel
   }
 
   const renderField = (field: TemplateField) => {
-    const value = responses[field.id] ?? ''
+    const raw = responses[field.id]
+    const value = typeof raw === 'string' ? raw : ''
+
+    if (field.type === 'multiselect') {
+      const selected = Array.isArray(raw) ? raw : []
+      return (
+        <div className="space-y-2">
+          {(field.options ?? []).map((opt) => (
+            <label
+              key={opt}
+              className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-colors ${
+                selected.includes(opt)
+                  ? 'border-sage-500 bg-sage-50'
+                  : 'border-gray-300 bg-white hover:border-sage-300'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(opt)}
+                onChange={() => toggleMultiResponse(field.id, opt)}
+                className="h-4 w-4 accent-[var(--sage-600)]"
+              />
+              <span className="text-base text-gray-900">{opt}</span>
+            </label>
+          ))}
+        </div>
+      )
+    }
 
     if (field.type === 'textarea') {
       return (

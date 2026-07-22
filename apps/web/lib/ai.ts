@@ -403,7 +403,7 @@ Return ONLY the JSON array. No prose, no code fences.`,
 }
 
 export type TemplateFieldType =
-  | 'text' | 'textarea' | 'date' | 'time' | 'email' | 'url' | 'number' | 'select'
+  | 'text' | 'textarea' | 'date' | 'time' | 'email' | 'url' | 'number' | 'select' | 'multiselect'
 
 export interface TemplateField {
   id: string          // snake_case field id
@@ -411,7 +411,7 @@ export interface TemplateField {
   type: TemplateFieldType
   required: boolean
   placeholder?: string
-  options?: string[]  // for select type
+  options?: string[]  // for select / multiselect types
   help?: string       // optional help text
 }
 
@@ -438,7 +438,7 @@ Extract EVERY form field. Return ONLY a JSON array of objects:
 {
   "id": "snake_case_id",
   "label": "Human Readable Label (from the actual form)",
-  "type": "text" | "textarea" | "date" | "time" | "email" | "url" | "number" | "select",
+  "type": "text" | "textarea" | "date" | "time" | "email" | "url" | "number" | "select" | "multiselect",
   "required": true | false,
   "placeholder": "hint text if present in form",
   "options": ["opt1", "opt2"],
@@ -454,6 +454,7 @@ TYPE MAPPING RULES:
 - <input type="url"> / "link" column / URL field → "url"
 - <input type="number"> / "numeric" / fields asking for "count", "capacity", "attendance", "limit" → "number"
 - <select> / radio buttons / "color" column with labels / "dropdown" → "select" with options from labels
+- checkbox groups / "choose all that apply" → "multiselect" with options from labels
 - "timerange" / date range column → split into TWO fields: {id}_start (date) and {id}_end (date)
 - "file" / image upload → SKIP (not supported yet)
 - "location" → text
@@ -509,7 +510,7 @@ Return ONLY the JSON array, no other text, no markdown fences, no explanation.`,
       typeof f === 'object' &&
       typeof f.id === 'string' &&
       typeof f.label === 'string' &&
-      ['text', 'textarea', 'date', 'time', 'email', 'url', 'number', 'select'].includes(f.type)
+      ['text', 'textarea', 'date', 'time', 'email', 'url', 'number', 'select', 'multiselect'].includes(f.type)
     )
   } catch {
     return []

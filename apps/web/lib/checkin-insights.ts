@@ -35,3 +35,11 @@ export function fieldsById(config: EventCheckinConfig | null): Map<string, Templ
   }
   return map
 }
+
+// Normalize a raw check_in_data value (string, boolean, or multiselect
+// array) to display/classification text.
+export function answerText(raw: unknown): string {
+  if (Array.isArray(raw)) return raw.map((v) => String(v)).join(', ')
+  if (typeof raw === 'boolean') return raw ? 'yes' : 'no'
+  return String(raw ?? '')
+}

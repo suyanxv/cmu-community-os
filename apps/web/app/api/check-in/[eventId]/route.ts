@@ -28,9 +28,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 const CheckInSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  // Dynamic field responses keyed by field id. Strings only since the public
-  // form only renders string-capturing inputs.
-  responses: z.record(z.string(), z.union([z.string(), z.boolean()])).optional().default({}),
+  // Dynamic field responses keyed by field id. Strings for single-value
+  // inputs, string arrays for multiselect checkbox groups.
+  responses: z.record(z.string(), z.union([z.string(), z.boolean(), z.array(z.string())])).optional().default({}),
 })
 
 // Public endpoint — anyone with the QR/link can check themselves in.

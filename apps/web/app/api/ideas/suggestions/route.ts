@@ -4,7 +4,7 @@ import { requireOrgMember } from '@/lib/auth'
 import { sql } from '@/lib/db'
 import { errorResponse } from '@/lib/errors'
 import { logActivity } from '@/lib/activity'
-import { fieldsById, isIdeaField } from '@/lib/checkin-insights'
+import { answerText, fieldsById, isIdeaField } from '@/lib/checkin-insights'
 import type { TemplateField } from '@/lib/ai'
 
 // Attendee event suggestions, harvested from check-in answers to
@@ -45,7 +45,7 @@ async function collectSuggestions(orgId: string): Promise<Suggestion[]> {
     for (const [fieldId, raw] of Object.entries(answers)) {
       const field = fields.get(fieldId)
       if (!field || !isIdeaField(field)) continue
-      const text = String(raw ?? '').trim()
+      const text = answerText(raw).trim()
       if (text.length < 3) continue
       const key = `${row.rsvp_id}:${fieldId}`
       if (handled.has(key)) continue
